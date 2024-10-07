@@ -30,4 +30,5 @@ while True:
      else:
         led_rouge.value(0)    
         led_verte.value(1)  
+        
      time.sleep(1)
