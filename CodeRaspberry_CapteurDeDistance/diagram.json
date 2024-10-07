@@ -1,0 +1,177 @@
+{
+    "version": 1,
+    "author": "Lilian Devroye",
+    "editor": "wokwi",
+    "parts": [
+        {
+            "type": "wokwi-pi-pico",
+            "id": "pico",
+            "top": -60.75,
+            "left": -159.6,
+            "attrs": {
+                "env": "micropython-20231227-v1.22.0"
+            }
+        },
+        {
+            "type": "wokwi-hc-sr04",
+            "id": "ultrasonic1",
+            "top": -209.7,
+            "left": 149.5,
+            "attrs": {
+                "distance": "35"
+            }
+        },
+        {
+            "type": "wokwi-resistor",
+            "id": "r1",
+            "top": 80.75,
+            "left": 76.8,
+            "attrs": {
+                "value": "2000"
+            }
+        },
+        {
+            "type": "wokwi-resistor",
+            "id": "r2",
+            "top": 128.75,
+            "left": 144,
+            "attrs": {
+                "value": "1000"
+            }
+        },
+        {
+            "type": "wokwi-led",
+            "id": "led1",
+            "top": 255.6,
+            "left": 13.4,
+            "attrs": {
+                "color": "green"
+            }
+        },
+        {
+            "type": "wokwi-led",
+            "id": "led2",
+            "top": 159.6,
+            "left": -44.2,
+            "attrs": {
+                "color": "red"
+            }
+        },
+        {
+            "type": "wokwi-resistor",
+            "id": "r3",
+            "top": 215.15,
+            "left": 259.2,
+            "attrs": {
+                "value": "220"
+            }
+        }
+    ],
+    "connections": [
+        [
+            "pico:VSYS",
+            "ultrasonic1:VCC",
+            "red",
+            [
+                "h0"
+            ]
+        ],
+        [
+            "ultrasonic1:TRIG",
+            "pico:GP17",
+            "blue",
+            [
+                "v172.8",
+                "h-173.2",
+                "v67.2"
+            ]
+        ],
+        [
+            "ultrasonic1:ECHO",
+            "r2:2",
+            "yellow",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "r2:1",
+            "pico:GP16",
+            "yellow",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "pico:GND.7",
+            "ultrasonic1:GND",
+            "black",
+            [
+                "h222"
+            ]
+        ],
+        [
+            "r2:1",
+            "r1:2",
+            "black",
+            [
+                "v0"
+            ]
+        ],
+        [
+            "r1:1",
+            "pico:GND.7",
+            "black",
+            [
+                "h-9.6",
+                "v-67.2"
+            ]
+        ],
+        [
+            "led2:A",
+            "pico:GP18",
+            "red",
+            [
+                "v9.6",
+                "h19.2",
+                "v-105.6"
+            ]
+        ],
+        [
+            "led1:A",
+            "pico:GP19",
+            "green",
+            [
+                "h19.2",
+                "v-163.2"
+            ]
+        ],
+        [
+            "led2:C",
+            "r3:2",
+            "black",
+            [
+                "v38.4",
+                "h232"
+            ]
+        ],
+        [
+            "led1:C",
+            "r3:2",
+            "black",
+            [
+                "v9.6",
+                "h-86"
+            ]
+        ],
+        [
+            "r3:1",
+            "pico:GND.7",
+            "black",
+            [
+                "v-201.6"
+            ]
+        ]
+    ],
+    "dependencies": {}
+}
