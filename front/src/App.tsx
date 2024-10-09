@@ -15,7 +15,7 @@ const App = () => {
 		{ path: '/login', element: <LoginPage isSigningUp={false} /> },
 	]);
 	return (
-		<Box className='h-full bg-bg'>
+		<Box className='h-auto bg-bg'>
 			<RouterProvider router={router} />
 		</Box>
 	);
