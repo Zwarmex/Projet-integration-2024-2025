@@ -10,9 +10,8 @@ const SettingsPage: React.FC = () => {
     const [feedTime, setFeedTime] = useState('08:00');
     const [waterTime, setWaterTime] = useState('09:00');
 
-    // Nouvel état pour la période de relevé des habitudes alimentaires
     const [reportPeriod, setReportPeriod] = useState('journalier');
-    const [feedingLogs, setFeedingLogs] = useState<any[]>([]); // Stocke les relevés simulés
+    const [feedingLogs, setFeedingLogs] = useState<any[]>([]); 
 
     const handleNotificationToggle = () => {
         setNotificationsEnabled(!notificationsEnabled);
@@ -38,16 +37,14 @@ const SettingsPage: React.FC = () => {
         setWaterTime(event.target.value);
     };
 
-    // Gérer la sélection de la période de relevé
+    
     const handleReportPeriodChange = (event: SelectChangeEvent<string>) => {
         setReportPeriod(event.target.value);
-        // Simuler la récupération des relevés
         simulateFeedingLogs(event.target.value);
     };
 
-    // Fonction pour simuler les relevés des habitudes alimentaires
     const simulateFeedingLogs = (period: string) => {
-		let logs: { date: string; foodAmount: string; waterAmount: string; }[] = []; // Initialisation à un tableau vide
+		let logs: { date: string; foodAmount: string; waterAmount: string; }[] = []; 
 		const currentDate = new Date();
 		
 		if (period === 'journalier') {
@@ -66,7 +63,7 @@ const SettingsPage: React.FC = () => {
 			}));
 		}
 	
-		setFeedingLogs(logs); // Pas d'erreur ici car logs est toujours défini
+		setFeedingLogs(logs); 
 	};
 
     return (
