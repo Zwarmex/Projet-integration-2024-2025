@@ -13,7 +13,7 @@ const HomePage: React.FC = () => {
 					<Button
 						className="cursor-pointer"
 						onClick={() => {
-							navigate("/settings)");
+							navigate("/settings");
 						}}>
 						<img
 							src={SettingsIcon}

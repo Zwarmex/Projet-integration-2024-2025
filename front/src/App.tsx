@@ -14,6 +14,7 @@ const App = () => {
 		},
 		{ path: "/login", element: <LoginPage isSigningUp={false} /> },
 		{ path: "/historique", element: <HistoriquePage /> },
+		{ path: "/settings", element: <SettingsPage /> },
 	]);
 	return (
 		<Box className="h-screen bg-bg">
