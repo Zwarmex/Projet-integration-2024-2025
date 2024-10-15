@@ -1,21 +1,22 @@
-import { Box } from '@mui/material';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { HomePage, LoginPage } from './Pages';
+import { Box } from "@mui/material";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { HistoriquePage, HomePage, LoginPage } from "./Pages";
 
 const App = () => {
 	const router = createBrowserRouter([
 		{
-			path: '/',
+			path: "/",
 			element: <HomePage />,
 		},
 		{
-			path: '/sign_up',
+			path: "/sign_up",
 			element: <LoginPage isSigningUp={true} />,
 		},
-		{ path: '/login', element: <LoginPage isSigningUp={false} /> },
+		{ path: "/login", element: <LoginPage isSigningUp={false} /> },
+		{ path: "/historique", element: <HistoriquePage /> },
 	]);
 	return (
-		<Box className='h-screen bg-bg'>
+		<Box className="h-screen bg-bg">
 			<RouterProvider router={router} />
 		</Box>
 	);
