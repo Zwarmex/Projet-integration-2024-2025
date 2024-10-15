@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { HomePage, LoginPage } from './Pages';
+import { HomePage, LoginPage, SettingsPage } from './Pages';
 
 const App = () => {
 	const router = createBrowserRouter([
@@ -13,6 +13,7 @@ const App = () => {
 			element: <LoginPage isSigningUp={true} />,
 		},
 		{ path: '/login', element: <LoginPage isSigningUp={false} /> },
+		{ path: '/settings', element: <SettingsPage/> },
 	]);
 	return (
 		<Box className='h-screen bg-bg'>
