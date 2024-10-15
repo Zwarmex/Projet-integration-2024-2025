@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { HistoriquePage, HomePage, LoginPage } from "./Pages";
+import { HistoriquePage, HomePage, LoginPage, SettingsPage } from "./Pages";
 
 const App = () => {
 	const router = createBrowserRouter([
