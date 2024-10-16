@@ -68,7 +68,6 @@ def mesurer_distance():
     duree_impulsion = fin_impulsion - debut_impulsion
     distance = duree_impulsion * 17165 / 1000000
     distance = round(distance, 0)
-    print('Distance:', "{:.0f}".format(distance), 'cm')    
     return distance
 
 
@@ -92,7 +91,7 @@ def publier_distance(client) :
                led_rouge.value(0)
                led_verte.value(1)
 
-          time.sleep(3)
+          time.sleep(1)
 
 
 
@@ -104,6 +103,7 @@ def main():
 
 
 main()
+
 
 
 
