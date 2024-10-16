@@ -20,8 +20,6 @@ Vous pouvez simuler ce schéma éléctronique dans VS Code si vous éxécutez le
 # 1ère ébauche du transfert de données via MQTT
 
 https://io.adafruit.com/
-aio_KHfj89mLVtSCJAox4tAeKComTblc
-Chicagolil/feeds/mes-donnees
 
 installer la librairie umqtt-simple sur le raspberry pi pico W
 peut se faire facilement via thonny
