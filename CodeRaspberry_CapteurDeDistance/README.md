@@ -1,6 +1,6 @@
 # Simulation MicroPython dans Wokwi pour VS Code
 
-Vous pouvez simuler ce schéma éléctronique dans VS Code si vous éxécutez les étapes suivantes 
+Vous pouvez simuler ce schéma éléctronique dans VS Code si vous éxécutez les étapes suivantes
 
 ## Prérequis
 
@@ -15,3 +15,15 @@ Vous pouvez simuler ce schéma éléctronique dans VS Code si vous éxécutez le
 
    ```python
    python -m mpremote connect port:rfc2217://localhost:4000 run main.py
+   ```
+
+# 1ère ébauche du transfert de données via MQTT
+
+https://io.adafruit.com/
+aio_KHfj89mLVtSCJAox4tAeKComTblc
+Chicagolil/feeds/mes-donnees
+
+installer la librairie umqtt-simple sur le raspberry pi pico W
+peut se faire facilement via thonny
+-> tools => manage Packages => rechercher 'umqtt simple'
+-> install
