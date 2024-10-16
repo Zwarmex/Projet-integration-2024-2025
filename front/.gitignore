@@ -23,5 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 
 
-back/config.env
-back/node_modules
+/back/config.env
+/back/node_modules
