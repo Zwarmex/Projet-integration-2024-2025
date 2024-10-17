@@ -2,30 +2,19 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {
 	Box,
 	Button,
-	Divider,
 	IconButton,
 	InputAdornment,
 	TextField,
 	Typography,
+	Paper,
+	Grid,
 } from '@mui/material';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import logoGoogle from '../Assets/Images/google.svg';
 
-type LoginFormProps = {
-	isSigningUp: boolean;
-};
-
-const LoginForm: React.FC<LoginFormProps> = ({ isSigningUp }) => {
-	const [name, setName] = useState<string>('');
-	const [nameError, setNameError] = useState<string>('');
+const LoginForm: React.FC<{ isSigningUp: boolean }> = ({ isSigningUp }) => {
 	const [email, setEmail] = useState<string>('');
-	const [emailError, setEmailError] = useState<string>('');
 	const [password, setPassword] = useState<string>('');
-	const [passwordError, setPasswordError] = useState<string>('');
-	const [passwordConfirm, setPasswordConfirm] = useState<string>('');
-	const [passwordConfirmError, setPasswordConfirmError] =
-		useState<string>('');
 	const [isPasswordShowing, setIsPasswordShowing] = useState<boolean>(false);
 
 	const navigate = useNavigate();
@@ -34,103 +23,56 @@ const LoginForm: React.FC<LoginFormProps> = ({ isSigningUp }) => {
 		navigate('/');
 	};
 
-	const handleSubmitGoogle = () => {
-		navigate('/');
-	};
-	console.log(name, password, email, passwordConfirm);
-
 	return (
-		<Box className='h-screen flex items-center content-center'>
-			<Box className='border rounded border-black p-6 space-y-5'>
-				{isSigningUp ? (
-					<TextField
-						className='w-full'
-						id='name'
-						label='Nom'
-						variant='outlined'
-						type='text'
-						error={!!nameError}
-						helperText={nameError}
-						onChange={(e) => {
-							setName(e.target.value);
-							setNameError('');
-						}}
-						required
-					/>
-				) : null}
-				<TextField
-					className='w-full'
-					id='email'
-					label='Email'
-					variant='outlined'
-					type='email'
-					error={!!emailError}
-					helperText={emailError}
-					onChange={(e) => {
-						setEmail(e.target.value);
-						setEmailError('');
-					}}
-					required
-				/>
-				<TextField
-					className='w-full'
-					id='password'
-					label='Mot de passe'
-					variant='outlined'
-					type={isPasswordShowing ? 'text' : 'password'}
-					error={!!passwordError}
-					helperText={passwordError}
-					onChange={(e) => {
-						setPassword(e.target.value);
-						setPasswordError('');
-					}}
-					slotProps={{
-						input: {
-							endAdornment: (
-								<InputAdornment position='end'>
-									<IconButton
-										onClick={() => {
-											setIsPasswordShowing(
-												!isPasswordShowing
-											);
-										}}
-										edge='end'>
-										{isPasswordShowing ? (
-											<Visibility />
-										) : (
-											<VisibilityOff />
-										)}
-									</IconButton>
-								</InputAdornment>
-							),
-						},
-					}}
-					required
-				/>
-				{isSigningUp ? (
-					<TextField
-						className='w-full'
-						id='password_confirmed'
-						label='Confirmez mot de passe'
-						variant='outlined'
-						type={isPasswordShowing ? 'text' : 'password'}
-						error={!!passwordConfirmError}
-						helperText={passwordConfirmError}
-						onChange={(e) => {
-							setPasswordConfirm(e.target.value);
-							setPasswordConfirmError('');
-						}}
-						slotProps={{
-							input: {
+		<Box
+			sx={{
+				
+				backgroundColor: '#D7C4A3',
+				display: 'flex',
+				justifyContent: 'center',
+				alignItems: 'center',
+			}}>
+			<Paper elevation={3} sx={{ padding: 4, maxWidth: 400, width: '100%' }}>
+				<Grid container spacing={3}>
+					{/* Titre du formulaire */}
+					<Grid item xs={12}>
+						<Typography variant="h5" textAlign="center" fontWeight="bold">
+							{isSigningUp ? "Créer un compte" : "Connexion"}
+						</Typography>
+					</Grid>
+
+					{/* Champ Email */}
+					<Grid item xs={12}>
+						<TextField
+							fullWidth
+							id="email"
+							label="Email"
+							variant="outlined"
+							type="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							required
+						/>
+					</Grid>
+
+					{/* Champ Mot de passe */}
+					<Grid item xs={12}>
+						<TextField
+							fullWidth
+							id="password"
+							label="Mot de passe"
+							variant="outlined"
+							type={isPasswordShowing ? 'text' : 'password'}
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							InputProps={{
 								endAdornment: (
-									<InputAdornment position='end'>
+									<InputAdornment position="end">
 										<IconButton
-											onClick={() => {
-												setIsPasswordShowing(
-													!isPasswordShowing
-												);
-											}}
-											edge='end'>
+											onClick={() =>
+												setIsPasswordShowing(!isPasswordShowing)
+											}
+											edge="end">
 											{isPasswordShowing ? (
 												<Visibility />
 											) : (
@@ -139,45 +81,34 @@ const LoginForm: React.FC<LoginFormProps> = ({ isSigningUp }) => {
 										</IconButton>
 									</InputAdornment>
 								),
-							},
-						}}
-						required
-					/>
-				) : null}
-				<Box className='w-full flex place-content-between'>
-					<Link to={isSigningUp ? '/login' : '/sign_up'}>
-						<Typography className='underline text-blue-400 cursor-pointer'>
-							{isSigningUp
-								? 'Déjà inscrit ?'
-								: "Par ici l'inscription"}
-						</Typography>
-					</Link>
-					<Button
-						variant='contained'
-						onClick={() => {
-							handleSubmitForm();
-						}}>
-						<Typography>
-							{isSigningUp ? "S'inscrire" : 'Se connecter'}
-						</Typography>
-					</Button>
-				</Box>
-				<Divider />
-				<Box className='grid place-content-center'>
-					<Button
-						variant='contained'
-						className='w-20 h-20 !bg-white !p-0'
-						onClick={() => {
-							handleSubmitGoogle();
-						}}>
-						<img
-							className='w-full h-full'
-							src={logoGoogle}
-							alt='Logo Google'
+							}}
+							required
 						/>
-					</Button>
-				</Box>
-			</Box>
+					</Grid>
+
+					{/* Lien et Bouton de soumission */}
+					<Grid item xs={12}>
+						<Button
+							fullWidth
+							variant="contained"
+							color="primary"
+							onClick={handleSubmitForm}>
+							{isSigningUp ? "S'inscrire" : 'Se connecter'}
+						</Button>
+					</Grid>
+
+					{/* Lien vers la page d'inscription ou de connexion */}
+					<Grid item xs={12} textAlign="center">
+						<Link to={isSigningUp ? '/login' : '/sign_up'}>
+							<Typography variant="body2" color="primary">
+								{isSigningUp
+									? 'Déjà inscrit ? Connexion'
+									: "Pas encore inscrit ? Créer un compte"}
+							</Typography>
+						</Link>
+					</Grid>
+				</Grid>
+			</Paper>
 		</Box>
 	);
 };
