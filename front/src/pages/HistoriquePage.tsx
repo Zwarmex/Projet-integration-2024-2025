@@ -8,8 +8,16 @@ const HistoriquePage: React.FC = () => {
 		<div className="h-screen w-screen">
 			<Header />
 			<div className="h-36 w-full flex items-center justify-center">
-				<Button onClick={() => setIsWater(true)}>Eau</Button>
-				<Button onClick={() => setIsWater(false)}>Nourriture</Button>
+				<Button
+					onClick={() => setIsWater(true)}
+					variant={isWater ? "contained" : "text"}>
+					Eau
+				</Button>
+				<Button
+					onClick={() => setIsWater(false)}
+					variant={!isWater ? "contained" : "text"}>
+					Nourriture
+				</Button>
 			</div>
 			{isWater ? <WaterHistory /> : <FoodHistory />}
 		</div>
