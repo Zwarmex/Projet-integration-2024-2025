@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 
-const NotificationItems = () => {
+const NotificationItems: React.FC = () => {
 	return (
 		<Box className="border-solid border-2 border-muted flex mb-2 rounded-lg p-2 content-between">
 			<Box className="w-1/3 flex items-center">Icone</Box>
