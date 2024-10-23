@@ -6,17 +6,20 @@ import urequests
 from umqtt.simple import MQTTClient
 
 #Paramètres MQTT 
-mqtt_host = "io.adafruit.com"
-mqtt_username = "Chicagolil"  
-mqtt_password = "aio_KHfj89mLVtSCJAox4tAeKComTblc"  
-mqtt_publish_topic = "Chicagolil/feeds/mes-donnees"  
-mqtt_client_id = "jdoismettreuntrucaupifdoncbonvoilajsprquecestassez"
+mqtt_host = "192.168.129.32"  # Remplace par l'IP du broker local
+mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
+mqtt_client_id = "pico_w_mqtt_client"  # Un identifiant unique pour le client MQTT
 
 # Initialisation du capteur et des LEDs
 trig = Pin(17, Pin.OUT)
 echo = Pin(16, Pin.IN, Pin.PULL_DOWN)
 led_rouge = Pin(18, Pin.OUT)
 led_verte = Pin(19, Pin.OUT)
+
+
+# Variables pour les distances de référence
+distance_max_cm = 50  
+distance_min_cm = 3   
 
 def connection_Wifi(ssid,password):
     wlan = network.WLAN(network.STA_IF)
@@ -35,8 +38,7 @@ def connection_mqtt():
      client = MQTTClient(
           client_id=mqtt_client_id,
           server=mqtt_host,
-          user=mqtt_username,
-          password=mqtt_password)
+     )
 
      client.connect()
      print("Connecté au broker MQTT")
@@ -60,31 +62,39 @@ def mesurer_distance():
     while echo.value() == 1:
         if time.ticks_diff(time.ticks_us(), debut_impulsion) > 30000:  
             print("Erreur : réponse trop longue du capteur")
-            return
+            time.sleep(1)
 
     fin_impulsion = time.ticks_us()
 
     
     duree_impulsion = fin_impulsion - debut_impulsion
     distance = duree_impulsion * 17165 / 1000000
-    distance = round(distance, 0)
     return distance
 
+def calculer_pourcentage(distance, distance_max_cm, distance_min_cm):
+    if distance >= distance_max_cm:
+        return 0
+    elif distance <= distance_min_cm:
+        return 100
+    else:
+        pourcentage = ((distance_max_cm - distance) / (distance_max_cm - distance_min_cm)) * 100
+        return round(pourcentage, 0)
 
 def publier_distance(client) : 
      while True :
-          distance = mesurer_distance()  
-          print('Publication de la Distance:', "{:.0f}".format(distance), 'cm')   
-          client.publish(mqtt_publish_topic, str(distance))
+          distance = mesurer_distance()
+          pourcentage = calculer_pourcentage(distance, distance_max_cm, distance_min_cm)
+          print(f'Publication du niveau de stock: {pourcentage}%') 
 
           #Préparer les données en json => ça servira plus tard 
           data = {
-            "distance": distance,
-            "timestamp": time.time()
+            "croquettes": pourcentage,
+            "eau": 0
           }
           json_data = json.dumps(data)
           print(json_data)
-          if distance > 20:
+          client.publish(mqtt_publish_topic, str(json_data))
+          if pourcentage < 20:
                led_rouge.value(1)
                led_verte.value(0)
           else:
@@ -103,6 +113,7 @@ def main():
 
 
 main()
+
 
 
 
