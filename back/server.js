@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/records", recordRoutes);
 
-let currentLevels = { croquettes: 0 }; // Stockage temporaire des données
+let niveauxActuels = { croquettes: 0 }; // Stockage temporaire des données
 
 // Configuration du client MQTT
 const mqttClient = mqtt.connect("mqtt://localhost:1883"); // Adresse du MQTT local
@@ -26,13 +26,13 @@ mqttClient.on("connect", () => {
 
 // Réception des messages publiés sur le topic
 mqttClient.on("message", (topic, message) => {
-  currentLevels = JSON.parse(message.toString());
-  console.log("Nouveaux niveaux reçus :", currentLevels);
+  niveauxActuels = JSON.parse(message.toString());
+  console.log("Nouveaux niveaux reçus :", niveauxActuels);
 });
 
 // API pour renvoyer les niveaux de croquette actuels
 app.get("/api/niveau", (req, res) => {
-  res.json(currentLevels);
+  res.json(niveauxActuels);
 });
 
 // start the Express server
