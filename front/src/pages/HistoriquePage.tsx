@@ -5,7 +5,7 @@ import { FoodHistory, Header, WaterHistory } from "../Containers";
 const HistoriquePage: React.FC = () => {
 	const [isWater, setIsWater] = useState(true);
 	return (
-		<div className="h-screen w-screen">
+		<div className="h-full w-screen">
 			<Header />
 			<div className="h-36 w-full flex items-center justify-center">
 				<Button
@@ -19,7 +19,7 @@ const HistoriquePage: React.FC = () => {
 					Nourriture
 				</Button>
 			</div>
-			<div className="p-3">
+			<div className="p-5">
 				{isWater ? <WaterHistory /> : <FoodHistory />}
 			</div>
 		</div>
