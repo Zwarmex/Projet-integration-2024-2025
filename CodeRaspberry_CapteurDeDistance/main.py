@@ -4,11 +4,14 @@ import network
 import json
 import urequests
 from umqtt.simple import MQTTClient
+import tls
+
 
 #Paramètres MQTT 
-mqtt_host = "192.168.129.32"  # Remplace par l'IP du broker local
+mqtt_host = "93f56c185fe04dd3b91a255ab6dfc566.s1.eu.hivemq.cloud"  # brokerMqtt dans le cloud
+mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
 mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
-mqtt_client_id = "pico_w_mqtt_client"  # Un identifiant unique pour le client MQTT
+
 
 # Initialisation du capteur et des LEDs
 trig = Pin(17, Pin.OUT)
@@ -35,14 +38,20 @@ def connection_Wifi(ssid,password):
     print("Réponse du serveur:", r.json())
 
 def connection_mqtt():
-     client = MQTTClient(
-          client_id=mqtt_client_id,
-          server=mqtt_host,
-     )
-
-     client.connect()
-     print("Connecté au broker MQTT")
-     return client
+    context = tls.SSLContext(tls.PROTOCOL_TLS_CLIENT)
+    context.verify_mode = tls.CERT_NONE
+    client = MQTTClient(
+    client_id=mqtt_client_id ,
+    server=mqtt_host,
+    port=0,
+    user=b"Chicagolil",
+    password=b"Test1234",
+    keepalive=7200,
+    ssl=context
+    )
+    client.connect()
+    print("Connecté au broker MQTT")
+    return client
 
 def mesurer_distance():
 
@@ -113,6 +122,7 @@ def main():
 
 
 main()
+
 
 
 
