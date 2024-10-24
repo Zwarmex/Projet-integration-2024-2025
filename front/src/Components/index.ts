@@ -1,2 +1,2 @@
-export { default as NotificationItems } from './NotificationItems';
-export { default as ProgressBar } from './ProgressBar';
+export { default as NotificationItems } from "./NotificationItems";
+export { default as ProgressBar } from "./ProgressBar";
