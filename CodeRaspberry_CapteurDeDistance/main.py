@@ -5,13 +5,20 @@ import json
 import urequests
 from umqtt.simple import MQTTClient
 import tls
+from hx711 import hx711
 
-
-#Paramètres MQTT 
+# Paramètres MQTT 
 mqtt_host = "93f56c185fe04dd3b91a255ab6dfc566.s1.eu.hivemq.cloud"  # brokerMqtt dans le cloud
 mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
 mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
 
+# Paramètres du capteur de poids
+conversion = 200  # Coefficient pour convertir en grammes
+nb_mesures = 5  # Nombre de mesures pour calculer la moyenne
+hx = hx711(Pin(28), Pin(27))  # Connexions HX711 : CLK à GP28, DAT à GP27
+hx.set_power(hx711.power.pwr_up)
+hx.set_gain(hx711.gain.gain_128)
+zero = None  # Cette variable sera définie après l'étalonnage
 
 # Initialisation du capteur et des LEDs
 trig = Pin(17, Pin.OUT)
@@ -89,16 +96,35 @@ def calculer_pourcentage(distance, distance_max_cm, distance_min_cm):
         pourcentage = ((distance_max_cm - distance) / (distance_max_cm - distance_min_cm)) * 100
         return round(pourcentage, 0)
 
-def publier_distance(client) : 
+
+def etalonnage_zero(nb_mesures):
+    total = 0
+    for _ in range(nb_mesures):
+        total += hx.get_value()
+        time.sleep(0.05)
+    return total / nb_mesures
+
+def mesurer_poids():
+    total = 0
+    for _ in range(nb_mesures):
+        total += hx.get_value()
+        time.sleep(0.05)
+    valeur_moyenne = total / nb_mesures
+    poids = (valeur_moyenne - zero) / conversion  # Conversion en grammes
+    return round(poids, 0)
+
+
+def publier_donnees(client) : 
      while True :
           distance = mesurer_distance()
           pourcentage = calculer_pourcentage(distance, distance_max_cm, distance_min_cm)
-          print(f'Publication du niveau de stock: {pourcentage}%') 
+          poids_eau = mesurer_poids()
+          print(f'Publication du niveau de stock: {pourcentage}%, poids: {poids_eau}g')
 
           #Préparer les données en json => ça servira plus tard 
           data = {
             "croquettes": pourcentage,
-            "eau": 0
+            "eau": poids_eau
           }
           json_data = json.dumps(data)
           print(json_data)
@@ -115,21 +141,17 @@ def publier_distance(client) :
 
 
 def main():
-     connection_Wifi('Proximus-Home-102833','ys4w2h7nk3ufn9ke')
-     client = connection_mqtt()
-     publier_distance(client)
+    # Connexion Wi-Fi
+    connection_Wifi('Proximus-Home-102833', 'ys4w2h7nk3ufn9ke')
 
+    # Étalonnage du capteur de poids
+    global zero
+    zero = etalonnage_zero(nb_mesures)
+    print(f"Étalonnage terminé, zéro = {zero}")
+
+    # Connexion MQTT et publication des données
+    client = connection_mqtt()
+    publier_donnees(client)
 
 
 main()
-
-
-
-
-
-
-
-
-
-
-
