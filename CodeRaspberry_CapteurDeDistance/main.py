@@ -11,6 +11,8 @@ from hx711 import hx711
 mqtt_host = "93f56c185fe04dd3b91a255ab6dfc566.s1.eu.hivemq.cloud"  # brokerMqtt dans le cloud
 mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
 mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
+mqtt_command_topic = "smartpaws/mesure_stock"  # Topic pour recevoir les commandes
+
 
 # Paramètres du capteur de poids
 conversion = 200  # Coefficient pour convertir en grammes
@@ -27,13 +29,21 @@ led_rouge = Pin(18, Pin.OUT)
 led_verte = Pin(19, Pin.OUT)
 
 
+# Ajout du moteur (utilisé ici comme un simple détecteur d’activation)
+moteur = False  # GPIO pour détecter l'activation du moteur
+
 # Variables pour les distances de référence
 distance_max_cm = 50  
 distance_min_cm = 3   
 
 # Variables pour les poids de référence
 poids_max_g = 500  
-poids_min_g = 0   
+poids_min_g = 0
+
+
+# Ajouter une variable globale pour contrôler les mesures
+mesure_en_cours = False
+
 
 def connection_Wifi(ssid,password):
     wlan = network.WLAN(network.STA_IF)
@@ -60,7 +70,9 @@ def connection_mqtt():
     keepalive=7200,
     ssl=context
     )
+    client.set_callback(on_message)  # Associe la fonction de callback
     client.connect()
+    client.subscribe(mqtt_command_topic)  # S'abonner au topic de commande
     print("Connecté au broker MQTT")
     return client
 
@@ -128,31 +140,39 @@ def mesurer_poids():
 
 
 def publier_donnees(client) : 
-     while True :
-          distance = mesurer_distance()
-          pourcentage_croquettes = calculer_pourcentage_croquettes(distance, distance_max_cm, distance_min_cm)
-          poids_eau = mesurer_poids()
-          pourcentage_eau = calculer_pourcentage_eau(poids_eau,poids_max_g,poids_min_g)
-          print(f'Publication du niveau de stock: {pourcentage_croquettes}%, poids: {pourcentage_eau}%')
+    global mesure_en_cours
+    mesure_en_cours = True  # Indiquer qu'une mesure est en cours
+    
+    distance = mesurer_distance()
+    pourcentage_croquettes = calculer_pourcentage_croquettes(distance, distance_max_cm, distance_min_cm)
+    poids_eau = mesurer_poids()
+    pourcentage_eau = calculer_pourcentage_eau(poids_eau, poids_max_g, poids_min_g)
+    
+    # Préparer les données JSON
+    data = {
+        "croquettes": pourcentage_croquettes,
+        "eau": pourcentage_eau
+    }
+    json_data = json.dumps(data)
+    print("Publication des données:", json_data)
+    client.publish(mqtt_publish_topic, json_data)
+    
+    # Mise à jour des LEDs en fonction du niveau
+    if pourcentage_croquettes < 20:
+        led_rouge.value(1)
+        led_verte.value(0)
+    else:
+        led_rouge.value(0)
+        led_verte.value(1)
 
-          #Préparer les données en json => ça servira plus tard 
-          data = {
-            "croquettes": pourcentage_croquettes,
-            "eau": pourcentage_eau
-          }
-          json_data = json.dumps(data)
-          print(json_data)
-          client.publish(mqtt_publish_topic, str(json_data))
-          if pourcentage_croquettes < 20:
-               led_rouge.value(1)
-               led_verte.value(0)
-          else:
-               led_rouge.value(0)
-               led_verte.value(1)
+    mesure_en_cours = False  # Réinitialiser l'état une fois la mesure terminée
 
-          time.sleep(1)
-
-
+# Fonction de callback pour traiter les messages reçus
+def on_message(topic, msg):
+    global mesure_en_cours
+    if topic == mqtt_command_topic.encode() and msg.decode() == "mesurer_stock" and not mesure_en_cours:
+        print("Commande reçue pour mesurer le niveau")
+        publier_donnees(client)  # Appeler la fonction de publication des données
 
 def main():
     # Connexion Wi-Fi
@@ -164,8 +184,19 @@ def main():
     print(f"Étalonnage terminé, zéro = {zero}")
 
     # Connexion MQTT et publication des données
+    global client
     client = connection_mqtt()
-    publier_donnees(client)
+    try:
+        while True:
+            client.check_msg()  # Vérifie les messages MQTT en attente
+            # Déclenche la publication si le moteur s'active
+            if moteur and not mesure_en_cours:
+                print("Détection de l'activation du moteur")
+                publier_donnees(client)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        client.disconnect()
+
 
 
 main()
