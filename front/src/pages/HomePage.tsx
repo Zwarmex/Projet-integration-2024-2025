@@ -5,13 +5,31 @@ import SettingsIcon from "../Assets/Images/settings.svg";
 import { Header, Level, NotificationsContainer } from "../Containers";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5050");
+const socket = io("http://localhost:5050", {
+  reconnection: true,
+  reconnectionAttempts: 5, // Nombre d'essais avant de renoncer
+  reconnectionDelay: 2000, // Délai de 2 secondes entre chaque tentative
+});
 
 const HomePage: React.FC = () => {
   const [niveaux, setNiveaux] = useState({ croquettes: 0, eau: 0 });
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Reconnexion automatique à Socket.IO dans le frontend
+    socket.on("connect", () => {
+      console.log("Connecté au serveur Socket.IO");
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.warn("Déconnecté de Socket.IO :", reason);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Erreur de connexion Socket.IO :", error);
+    });
+
+    // Charger les données au montage du composant
     const fetchLevels = async () => {
       try {
         const response = await fetch("http://localhost:5050/api/niveau"); // Appel API backend pour récuperer le niveau du stock
@@ -24,7 +42,9 @@ const HomePage: React.FC = () => {
         console.error("Erreur :", error);
       }
     };
+    fetchLevels(); // Charger les données au montage
 
+    // Déclencher une mesure du stock à chaque visite du site sur le Pico via le backend
     const triggerMesure = async () => {
       try {
         await fetch("http://localhost:5050/api/mesure_stock"); // Appel API pour déclencher la mesure
@@ -32,9 +52,9 @@ const HomePage: React.FC = () => {
         console.error("Erreur lors du déclenchement de la mesure :", error);
       }
     };
-
     triggerMesure();
-    fetchLevels(); // Charger les données au montage
+
+    // Écouter les mises à jour en temps réel via Socket.IO
     socket.on("niveauUpdate", (newData) => {
       setNiveaux(newData); // Mettre à jour l'état dès qu'une nouvelle donnée arrive
     });

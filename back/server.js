@@ -14,11 +14,17 @@ const options = {
   protocol: "mqtts",
   username: "Chicagolil",
   password: "Test1234",
+  reconnectPeriod: 1000, // Tente de se reconnecter chaque seconde si la connexion est perdue
 };
 
 app.use(cors());
 app.use(express.json());
 app.use("/api/records", recordRoutes);
+
+app.use((err, req, res, next) => {
+  console.error("Erreur serveur :", err.stack);
+  res.status(500).json({ message: "Erreur interne du serveur" });
+});
 
 let niveauxActuels = { croquettes: 0, eau: 0 }; // Stockage temporaire des données
 
@@ -31,6 +37,18 @@ const io = new Server(server, {
   },
 });
 
+io.on("connection", (socket) => {
+  console.log("Nouvelle connexion Socket.IO");
+
+  socket.on("disconnect", (reason) => {
+    console.log("Déconnexion Socket.IO:", reason);
+  });
+
+  socket.on("error", (error) => {
+    console.error("Erreur Socket.IO:", error);
+  });
+});
+
 // Configuration du client MQTT
 const mqttClient = mqtt.connect(options); // Adresse du MQTT local
 
@@ -41,6 +59,10 @@ mqttClient.on("connect", () => {
       console.error("Erreur d'abonnement au topic MQTT", err);
     }
   });
+});
+
+mqttClient.on("error", (error) => {
+  console.error("Erreur de connexion MQTT :", error);
 });
 
 // Réception des messages publiés sur le topic
