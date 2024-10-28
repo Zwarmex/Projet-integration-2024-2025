@@ -3,6 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SettingsIcon from "../Assets/Images/settings.svg";
 import { Header, Level, NotificationsContainer } from "../Containers";
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5050");
 
 const HomePage: React.FC = () => {
   const [niveaux, setNiveaux] = useState({ croquettes: 0, eau: 0 });
@@ -23,8 +26,13 @@ const HomePage: React.FC = () => {
     };
 
     fetchLevels(); // Charger les données au montage
-    const interval = setInterval(fetchLevels, 5000); // Actualiser toutes les 5 secondes
-    return () => clearInterval(interval); // Nettoyer l'intervalle à la destruction du composant
+    socket.on("niveauUpdate", (newData) => {
+      setNiveaux(newData); // Mettre à jour l'état dès qu'une nouvelle donnée arrive
+    });
+
+    return () => {
+      socket.off("niveauUpdate");
+    };
   }, []);
 
   return (

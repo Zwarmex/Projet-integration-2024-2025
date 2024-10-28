@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import recordRoutes from "./routes/record.js"; // Ajout de la route
 import mqtt from "mqtt";
+import http from "http";
+import { Server } from "socket.io";
 
 const PORT = process.env.PORT || 5050;
 const app = express();
@@ -20,6 +22,15 @@ app.use("/api/records", recordRoutes);
 
 let niveauxActuels = { croquettes: 0, eau: 0 }; // Stockage temporaire des données
 
+// Configuration du serveur HTTP et Socket.IO
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000", // Adresse du frontend
+    methods: ["GET", "POST"],
+  },
+});
+
 // Configuration du client MQTT
 const mqttClient = mqtt.connect(options); // Adresse du MQTT local
 
@@ -36,6 +47,7 @@ mqttClient.on("connect", () => {
 mqttClient.on("message", (topic, message) => {
   niveauxActuels = JSON.parse(message.toString());
   console.log("Nouveaux niveaux reçus :", niveauxActuels);
+  io.emit("niveauUpdate", niveauxActuels);
 });
 
 // API pour renvoyer les niveaux de croquette actuels
@@ -44,6 +56,6 @@ app.get("/api/niveau", (req, res) => {
 });
 
 // start the Express server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
