@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/records", recordRoutes);
 
-let niveauxActuels = { croquettes: 0 }; // Stockage temporaire des données
+let niveauxActuels = { croquettes: 0, eau: 0 }; // Stockage temporaire des données
 
 // Configuration du client MQTT
 const mqttClient = mqtt.connect(options); // Adresse du MQTT local
