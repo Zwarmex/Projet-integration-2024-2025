@@ -7,9 +7,9 @@ import { styled } from "@mui/material/styles";
 
 // Conteneur stylé
 const NotificationContainer = styled(Box)(({ theme }) => ({
-	backgroundColor: theme.palette.warning.light,
-	border: `2px solid ${theme.palette.warning.main}`,
-	color: theme.palette.warning.contrastText,
+	backgroundColor: "#FAE3CB",
+	border: "2px solid #A0522D",
+	color: "#3D3D3D",
 	display: "flex",
 	alignItems: "center",
 	padding: theme.spacing(2),
