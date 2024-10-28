@@ -50,6 +50,12 @@ mqttClient.on("message", (topic, message) => {
   io.emit("niveauUpdate", niveauxActuels);
 });
 
+// Endpoint pour déclencher une mesure de niveau
+app.get("/api/mesure_stock", (req, res) => {
+  mqttClient.publish("smartpaws/mesure_stock", "mesurer_stock"); // Envoie la commande au Raspberry Pi
+  res.json({ message: "Commande de mesure du stock envoyée au Raspberry Pi" });
+});
+
 // API pour renvoyer les niveaux de croquette actuels
 app.get("/api/niveau", (req, res) => {
   res.json(niveauxActuels);

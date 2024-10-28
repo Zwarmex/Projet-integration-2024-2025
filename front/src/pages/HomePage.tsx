@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchLevels = async () => {
       try {
-        const response = await fetch("http://localhost:5050/api/niveau"); // Appel API backend
+        const response = await fetch("http://localhost:5050/api/niveau"); // Appel API backend pour récuperer le niveau du stock
         if (!response.ok) {
           throw new Error("Erreur lors de la récupération des données");
         }
@@ -25,6 +25,15 @@ const HomePage: React.FC = () => {
       }
     };
 
+    const triggerMesure = async () => {
+      try {
+        await fetch("http://localhost:5050/api/mesure_stock"); // Appel API pour déclencher la mesure
+      } catch (error) {
+        console.error("Erreur lors du déclenchement de la mesure :", error);
+      }
+    };
+
+    triggerMesure();
     fetchLevels(); // Charger les données au montage
     socket.on("niveauUpdate", (newData) => {
       setNiveaux(newData); // Mettre à jour l'état dès qu'une nouvelle donnée arrive
