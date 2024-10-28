@@ -31,6 +31,10 @@ led_verte = Pin(19, Pin.OUT)
 distance_max_cm = 50  
 distance_min_cm = 3   
 
+# Variables pour les poids de référence
+poids_max_g = 500  
+poids_min_g = 0   
+
 def connection_Wifi(ssid,password):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -87,7 +91,7 @@ def mesurer_distance():
     distance = duree_impulsion * 17165 / 1000000
     return distance
 
-def calculer_pourcentage(distance, distance_max_cm, distance_min_cm):
+def calculer_pourcentage_croquettes(distance, distance_max_cm, distance_min_cm):
     if distance >= distance_max_cm:
         return 0
     elif distance <= distance_min_cm:
@@ -96,6 +100,15 @@ def calculer_pourcentage(distance, distance_max_cm, distance_min_cm):
         pourcentage = ((distance_max_cm - distance) / (distance_max_cm - distance_min_cm)) * 100
         return round(pourcentage, 0)
 
+
+def calculer_pourcentage_eau(poids, poids_max_g, poids_min_g):
+    if poids <= poids_min_g:
+        return 0
+    elif poids >= poids_max_g:
+        return 100
+    else:
+        pourcentage = ((poids - poids_min_g) / (poids_max_g - poids_min_g)) * 100
+        return round(pourcentage, 0)
 
 def etalonnage_zero(nb_mesures):
     total = 0
@@ -117,19 +130,20 @@ def mesurer_poids():
 def publier_donnees(client) : 
      while True :
           distance = mesurer_distance()
-          pourcentage = calculer_pourcentage(distance, distance_max_cm, distance_min_cm)
+          pourcentage_croquettes = calculer_pourcentage_croquettes(distance, distance_max_cm, distance_min_cm)
           poids_eau = mesurer_poids()
-          print(f'Publication du niveau de stock: {pourcentage}%, poids: {poids_eau}g')
+          pourcentage_eau = calculer_pourcentage_eau(poids_eau,poids_max_g,poids_min_g)
+          print(f'Publication du niveau de stock: {pourcentage_croquettes}%, poids: {pourcentage_eau}%')
 
           #Préparer les données en json => ça servira plus tard 
           data = {
-            "croquettes": pourcentage,
-            "eau": poids_eau
+            "croquettes": pourcentage_croquettes,
+            "eau": pourcentage_eau
           }
           json_data = json.dumps(data)
           print(json_data)
           client.publish(mqtt_publish_topic, str(json_data))
-          if pourcentage < 20:
+          if pourcentage_croquettes < 20:
                led_rouge.value(1)
                led_verte.value(0)
           else:
