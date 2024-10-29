@@ -8,12 +8,12 @@ from umqtt.simple import MQTTClient
 import tls
 from hx711 import hx711
 from machine import WDT
+import ujson
 
 # Initialise le watchdog timer
 wdt = WDT(timeout=5000)  # Timeout de 5 secondes
 
 # Paramètres MQTT 
-mqtt_host = "93f56c185fe04dd3b91a255ab6dfc566.s1.eu.hivemq.cloud"  # brokerMqtt dans le cloud
 mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
 mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
 mqtt_command_topic = "smartpaws/mesure_stock"  # Topic pour recevoir les commandes
@@ -50,12 +50,25 @@ poids_min_g = 0
 mesure_en_cours = False
 
 
-def connection_Wifi(ssid,password):
+
+
+
+def charger_config():
+    try:
+        with open("config.json") as f:
+            config = ujson.load(f)
+            return config
+    except Exception as e:
+        print(f"Erreur de chargement du fichier de configuration: {e}")
+        return None
+
+
+def connection_Wifi(wifi_ssid,wifi_password):
     global wlan 
     try : 
         wlan = network.WLAN(network.STA_IF)
         wlan.active(True)
-        wlan.connect(ssid, password)
+        wlan.connect(wifi_ssid, wifi_password)
 
         while not wlan.isconnected():
             print("Connexion en cours...")
@@ -67,8 +80,9 @@ def connection_Wifi(ssid,password):
         print("Réponse du serveur:", r.json())
     except Exception as e : 
         print(f"Erreur lors de la connexion Wifi: {e}")
-        verifier_connexion_wifi()
-def connection_mqtt():
+        verifier_connexion_wifi(wifi_ssid,wifi_password)
+
+def connection_mqtt(mqtt_host,mqtt_user,mqtt_password):
     try:
         context = tls.SSLContext(tls.PROTOCOL_TLS_CLIENT)
         context.verify_mode = tls.CERT_NONE
@@ -76,8 +90,8 @@ def connection_mqtt():
         client_id=mqtt_client_id ,
         server=mqtt_host,
         port=0,
-        user=b"Chicagolil",
-        password=b"Test1234",
+        user= mqtt_user ,
+        password=mqtt_password ,
         keepalive=7200,
         ssl=context
         )
@@ -167,7 +181,7 @@ def publier_donnees(client) :
     global mesure_en_cours
     mesure_en_cours = True  # Indiquer qu'une mesure est en cours
     
-
+    
     distance = moyenne_mesure_distance()
     if distance is None:
         print("Erreur de mesure de distance, utilisation d'une valeur par défaut")
@@ -207,7 +221,6 @@ def on_message(topic, msg):
     if topic == mqtt_command_topic.encode() and msg.decode() == "mesurer_stock" and not mesure_en_cours:
         print("Commande reçue pour mesurer le niveau")
         publier_donnees(client)  # Appeler la fonction de publication des données
-        verifier_connexion_wifi()
         verifier_connexion_mqtt()
 
 
@@ -215,10 +228,10 @@ def on_message(topic, msg):
 
 # FONCTIONS DE VERIFICATIONS pour augmenter la résilience aux pannes
 
-def verifier_connexion_wifi():
+def verifier_connexion_wifi(wifi_ssid,wifi_password):
     if not wlan.isconnected():
         print("Wi-Fi déconnecté, tentative de reconnexion...")
-        wlan.connect("Proximus-Home-102833", "ys4w2h7nk3ufn9ke")
+        wlan.connect(wifi_ssid,wifi_password)
         while not wlan.isconnected():
             print("Reconnexion Wi-Fi en cours...")
             wdt.feed()
@@ -243,8 +256,22 @@ def redemarrer_systeme():
 
 
 def main():
+    
+
+    config = charger_config()
+
+    # Vérifier si la configuration a été chargée avec succès
+    if config:
+        wifi_ssid = config.get("wifi_ssid")
+        wifi_password = config.get("wifi_password")
+        mqtt_host = config.get("mqtt_host")
+        mqtt_user = config.get("mqtt_user")
+        mqtt_password = config.get("mqtt_password")
+    else:
+        print("Impossible de charger la configuration.")
+
     # Connexion Wi-Fi
-    connection_Wifi('Proximus-Home-102833', 'ys4w2h7nk3ufn9ke')
+    connection_Wifi(wifi_ssid,wifi_password)
 
     # Étalonnage du capteur de poids
     global zero
@@ -253,7 +280,7 @@ def main():
 
     # Connexion MQTT et publication des données
     global client
-    client = connection_mqtt()
+    client = connection_mqtt(mqtt_host, mqtt_user, mqtt_password)
     try:
         
         while True:
@@ -263,7 +290,7 @@ def main():
             if moteur and not mesure_en_cours:
                 print("Détection de l'activation du moteur")
                 publier_donnees(client)
-                verifier_connexion_wifi()
+                verifier_connexion_wifi(wifi_ssid,wifi_password)
                 verifier_connexion_mqtt()
             time.sleep(1)
 
