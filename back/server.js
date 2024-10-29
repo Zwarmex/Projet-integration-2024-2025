@@ -4,16 +4,19 @@ import recordRoutes from "./routes/record.js"; // Ajout de la route
 import mqtt from "mqtt";
 import http from "http";
 import { Server } from "socket.io";
+import dotenv from "dotenv";
+
+dotenv.config(); // Charger les variables d'environnement
 
 const PORT = process.env.PORT || 5050;
 const app = express();
 
 const options = {
-  host: "93f56c185fe04dd3b91a255ab6dfc566.s1.eu.hivemq.cloud",
-  port: 8883,
+  host: process.env.MQTT_HOST,
+  port: Number(process.env.MQTT_PORT),
   protocol: "mqtts",
-  username: "Chicagolil",
-  password: "Test1234",
+  username: process.env.MQTT_USERNAME,
+  password: process.env.MQTT_PASSWORD,
   reconnectPeriod: 1000, // Tente de se reconnecter chaque seconde si la connexion est perdue
 };
 
