@@ -1,17 +1,15 @@
-from machine import Pin
-import machine
+from machine import Pin # type: ignore
+import machine # type: ignore
 import time
-import network
+import network # type: ignore
 import json
 import urequests
-from umqtt.simple import MQTTClient
-import tls
-from hx711 import hx711
-from machine import WDT
-import ujson
+from umqtt.simple import MQTTClient # type: ignore
+import tls # type: ignore
+from hx711 import hx711 # type: ignore
+import ujson # type: ignore
+import config_wifi
 
-# Initialise le watchdog timer
-wdt = WDT(timeout=5000)  # Timeout de 5 secondes
 
 # Paramètres MQTT 
 mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
@@ -63,24 +61,7 @@ def charger_config():
         return None
 
 
-def connection_Wifi(wifi_ssid,wifi_password):
-    global wlan 
-    try : 
-        wlan = network.WLAN(network.STA_IF)
-        wlan.active(True)
-        wlan.connect(wifi_ssid, wifi_password)
 
-        while not wlan.isconnected():
-            print("Connexion en cours...")
-            wdt.feed()
-            time.sleep(1)
-
-        print("Connecté !")
-        r = urequests.get("http://date.jsontest.com")
-        print("Réponse du serveur:", r.json())
-    except Exception as e : 
-        print(f"Erreur lors de la connexion Wifi: {e}")
-        verifier_connexion_wifi(wifi_ssid,wifi_password)
 
 def connection_mqtt(mqtt_host,mqtt_user,mqtt_password):
     try:
@@ -95,7 +76,6 @@ def connection_mqtt(mqtt_host,mqtt_user,mqtt_password):
         keepalive=7200,
         ssl=context
         )
-        wdt.feed()
         client.set_callback(on_message)  # Associe la fonction de callback
         client.connect()
         client.subscribe(mqtt_command_topic)  # S'abonner au topic de commande
@@ -228,15 +208,7 @@ def on_message(topic, msg):
 
 # FONCTIONS DE VERIFICATIONS pour augmenter la résilience aux pannes
 
-def verifier_connexion_wifi(wifi_ssid,wifi_password):
-    if not wlan.isconnected():
-        print("Wi-Fi déconnecté, tentative de reconnexion...")
-        wlan.connect(wifi_ssid,wifi_password)
-        while not wlan.isconnected():
-            print("Reconnexion Wi-Fi en cours...")
-            wdt.feed()
-            time.sleep(1)
-        print("Reconnecté au Wi-Fi")
+
 
 
 def verifier_connexion_mqtt():
@@ -257,46 +229,46 @@ def redemarrer_systeme():
 
 def main():
     
+    wifi_connected = config_wifi.wifi_setup()
 
-    config = charger_config()
+    if wifi_connected :
 
-    # Vérifier si la configuration a été chargée avec succès
-    if config:
-        wifi_ssid = config.get("wifi_ssid")
-        wifi_password = config.get("wifi_password")
-        mqtt_host = config.get("mqtt_host")
-        mqtt_user = config.get("mqtt_user")
-        mqtt_password = config.get("mqtt_password")
-    else:
-        print("Impossible de charger la configuration.")
+        config = charger_config()
 
-    # Connexion Wi-Fi
-    connection_Wifi(wifi_ssid,wifi_password)
-
-    # Étalonnage du capteur de poids
-    global zero
-    zero = etalonnage_zero(nb_mesures)
-    print(f"Étalonnage terminé, zéro = {zero}")
-
-    # Connexion MQTT et publication des données
-    global client
-    client = connection_mqtt(mqtt_host, mqtt_user, mqtt_password)
-    try:
+        # Vérifier si la configuration a été chargée avec succès
+        if config:
+            mqtt_host = config.get("mqtt_host")
+            mqtt_user = config.get("mqtt_user")
+            mqtt_password = config.get("mqtt_password")
+        else:
+            print("Impossible de charger la configuration.")
         
-        while True:
-            wdt.feed()
-            client.check_msg()  # Vérifie les messages MQTT en attente
-            # Déclenche la publication si le moteur s'active
-            if moteur and not mesure_en_cours:
-                print("Détection de l'activation du moteur")
-                publier_donnees(client)
-                verifier_connexion_wifi(wifi_ssid,wifi_password)
-                verifier_connexion_mqtt()
-            time.sleep(1)
 
-    except KeyboardInterrupt:
-        client.disconnect()
+        # Étalonnage du capteur de poids
+        global zero
+        zero = etalonnage_zero(nb_mesures)
+        print(f"Étalonnage terminé, zéro = {zero}")
 
+        # Connexion MQTT et publication des données
+        global client
+        client = connection_mqtt(mqtt_host, mqtt_user, mqtt_password)
+        try:
+            
+            while True:
+                client.check_msg()  # Vérifie les messages MQTT en attente
+                # Déclenche la publication si le moteur s'active
+                if moteur and not mesure_en_cours:
+                    print("Détection de l'activation du moteur")
+                    publier_donnees(client)
+                    verifier_connexion_mqtt()
+                time.sleep(1)
+
+        except KeyboardInterrupt:
+            client.disconnect()
+
+    else:
+        print("Échec de la connexion Wi-Fi. Redémarrage requis.")
 
 
 main()
+
