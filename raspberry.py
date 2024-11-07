@@ -14,7 +14,7 @@ mqtt_publish_topic = "Chicagolil/feeds/mes-donnees"
 mqtt_client_id = "jdoismettreuntrucaupifdoncbonvoilajsprquecestassez"
 
 #Paramètres nourissage
-reward_cooldown = 8 #hours
+max_rewards = 5 #par jour
 time_step = 10 #secondes
 food_vol = 5 #L
 food_hight = 50 #cm
@@ -125,9 +125,15 @@ def main():
     client = connection_mqtt()
     publier_distance(client)
 
-    last_reward = time.time() - reward_cooldown*60*60
+    # last_reward = time.time() - reward_cooldown*60*60
+    rewards_day = 0
+    last_time = time.time()
     last_meal = time.time()
     while True:
+        if time.time()//(60*60*24) != last_time//(60*60*24): # nouveau jour
+            rewards_day = 0
+            last_time = time.time()
+        
         net = hx.get_value()  # Obtenir la valeur brute du capteur
         print("capteur eau :", net * 2.38, "ml")  # Afficher la mesure brute et la valeur convertie
         if net * 2.38 < 500:
@@ -143,7 +149,7 @@ def main():
             pwm_food.duty_ns(0)
             last_meal = time.time()
         
-        if but_reward.value() == 0 and time.time() - last_reward >= reward_cooldown*60*60:
+        if but_reward.value() == 0 and rewards_day < max_rewards:
             print("[Donne friandise]") # todo
             for i in range(1): #ou plus?
                 pwm_reward.duty_ns(2000000) # todo: moteur (quel modèle?)
@@ -151,7 +157,7 @@ def main():
                 pwm_food.duty_ns(1500000)
                 time.sleep(1)
             pwm_reward.duty_ns(0)
-            last_reward = time.time()
+            rewards_day += 1
 
         time.sleep(time_step)  # Pause avant la prochaine itération
 
