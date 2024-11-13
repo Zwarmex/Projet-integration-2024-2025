@@ -6,7 +6,7 @@ const NotificationsContainer: React.FC = () => {
 	return (
 		<Box className="border-solid border-2 border-black rounded-lg w-1/2  p-3">
 			<NotificationItems />
-			<NotificationItems />
+			
 		</Box>
 	);
 };
