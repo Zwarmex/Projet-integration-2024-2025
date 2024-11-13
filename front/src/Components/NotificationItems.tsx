@@ -32,14 +32,7 @@ const NotificationItems: React.FC<{ message: string; onAddFood: () => void }> = 
 				</Typography>
 				<Typography variant="body1">{message}</Typography>
 			</Box>
-			<Button
-				variant="contained"
-				color="primary"
-				startIcon={<AddCircleOutlineIcon />}
-				onClick={onAddFood} // Action pour ajouter de la nourriture
-			>
-				Remplir Nourriture
-			</Button>
+			
 		</NotificationContainer>
 	);
 };
