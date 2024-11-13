@@ -19,7 +19,7 @@ const HistoriquePage: React.FC = () => {
 					Nourriture
 				</Button>
 			</div>
-			<div className="p-5">
+			<div className="p-5 bg-bg">
 				{isWater ? <WaterHistory /> : <FoodHistory />}
 			</div>
 		</div>

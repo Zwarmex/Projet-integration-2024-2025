@@ -1,3 +1,4 @@
+import { Button } from "@mui/material";
 import {
 	CategoryScale,
 	Chart as ChartJS,
@@ -24,6 +25,7 @@ ChartJS.register(
 
 const WaterHistory: React.FC = () => {
 	const [waterLogs, setWaterLogs] = useState<any[]>([]);
+	const [chartType, setChartType] = useState<string>("daily");
 
 	useEffect(() => {
 		// Charger les données du fichier JSON
@@ -36,16 +38,51 @@ const WaterHistory: React.FC = () => {
 		console.log("Données chargées :", waterLogs);
 	}, [waterLogs]);
 
-	const chartData = {
-		labels: waterLogs.map((log) => `${log.date} ${log.heure}`),
-		datasets: [
-			{
-				label: "Eau (mL)",
-				data: waterLogs.map((log) => log["quantité(mL)"]),
-				borderColor: "rgba(54, 162, 235, 1)",
-				backgroundColor: "rgba(54, 162, 235, 0.2)",
-			},
-		],
+	const getWeek = (dateString: string) => {
+		const date = new Date(dateString);
+		const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+		const pastDaysOfYear =
+			(date.getTime() - firstDayOfYear.getTime()) / 86400000;
+		return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+	};
+
+	const getChartData = () => {
+		if (chartType === "weekly") {
+			// Regrouper les données par semaine
+			const weeklyData = waterLogs.reduce((acc, log) => {
+				const week = getWeek(log.date);
+				if (!acc[week]) {
+					acc[week] = 0;
+				}
+				acc[week] += log["quantité(mL)"];
+				return acc;
+			}, {});
+
+			return {
+				labels: Object.keys(weeklyData),
+				datasets: [
+					{
+						label: "Eau (mL)",
+						data: Object.values(weeklyData),
+						borderColor: "rgba(54, 162, 235, 1)",
+						backgroundColor: "rgba(54, 162, 235, 0.2)",
+					},
+				],
+			};
+		} else {
+			// Utiliser les données journalières
+			return {
+				labels: waterLogs.map((log) => `${log.date} ${log.heure}`),
+				datasets: [
+					{
+						label: "Eau (mL)",
+						data: waterLogs.map((log) => log["quantité(mL)"]),
+						borderColor: "rgba(54, 162, 235, 1)",
+						backgroundColor: "rgba(54, 162, 235, 0.2)",
+					},
+				],
+			};
+		}
 	};
 
 	const chartOptions = {
@@ -63,8 +100,20 @@ const WaterHistory: React.FC = () => {
 
 	return (
 		<div>
+			<div>
+				<Button
+					onClick={() => setChartType("daily")}
+					variant={chartType === "daily" ? "contained" : "text"}>
+					Journalier
+				</Button>
+				<Button
+					onClick={() => setChartType("weekly")}
+					variant={chartType === "weekly" ? "contained" : "text"}>
+					Hebdomadaire
+				</Button>
+			</div>
 			{waterLogs.length > 0 ? (
-				<Line data={chartData} options={chartOptions} />
+				<Line data={getChartData()} options={chartOptions} />
 			) : (
 				<p>Chargement des données...</p>
 			)}
