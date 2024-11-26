@@ -14,7 +14,7 @@ import config_wifi
 # Paramètres MQTT 
 mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
 mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
-mqtt_command_topic = "smartpaws/mesure_stock"  # Topic pour recevoir les commandes
+mqtt_command_topic = "smartpaws/commandes"  # Topic pour recevoir les commandes
 
 
 # Paramètres du capteur de poids
@@ -55,10 +55,16 @@ def charger_config():
     try:
         with open("config.json") as f:
             config = ujson.load(f)
-            return config
+            
     except Exception as e:
         print(f"Erreur de chargement du fichier de configuration: {e}")
-        return None
+        config = {}
+    config.setdefault("seuil_croquettes", 50)  # En grammes
+    config.setdefault("seuil_eau", 100)  # En millilitres
+    config.setdefault("quantite_croquettes", 30)  # Quantité par défaut
+    config.setdefault("quantite_eau", 100)  # Quantité par défaut
+    return config
+
 
 
 
@@ -157,6 +163,71 @@ def mesurer_poids():
     return poids if poids else None
 
 
+
+def mesurer_gamelle_croquettes():
+    """Placeholder pour mesurer le poids des croquettes dans la gamelle."""
+    print("Mesure de la gamelle de croquettes")
+    # Utiliser un capteur HX711 dédié
+    return 101
+    pass
+
+def mesurer_gamelle_eau():
+    """Placeholder pour mesurer le poids de l'eau dans la gamelle."""
+    print("Mesure de la gamelle d'eau")
+    # Utiliser un capteur HX711 dédié
+    return 101
+    pass
+
+def activer_moteur_croquettes(duree):
+    """Active le moteur pour distribuer des croquettes."""
+    # Utiliser le GPIO dédié pour une durée donnée
+    if not mesure_en_cours:
+        print("Détection de l'activation du moteur")
+        publier_donnees(client)
+        verifier_connexion_mqtt()
+    pass
+
+def activer_pompe_eau(duree):
+    """Active la pompe pour distribuer de l'eau."""
+    # Utiliser le GPIO dédié pour une durée donnée
+    if not mesure_en_cours:
+        print("Détection de l'activation du moteur")
+        publier_donnees(client)
+        verifier_connexion_mqtt()
+    pass
+
+
+def verifier_seuils_et_distribuer():
+    """Vérifie les niveaux et déclenche la distribution si nécessaire."""
+    print("Vérification des seuils")
+    niveau_croquettes = mesurer_gamelle_croquettes()
+    niveau_eau = mesurer_gamelle_eau()
+
+    if niveau_croquettes < config["seuil_croquettes"]:
+        print("Niveau de croquettes insuffisant, distribution en cours...")
+        activer_moteur_croquettes(config["quantite_croquettes"])
+        notifier_activation(client, "croquettes",config["quantite_croquettes"], "automatique")
+
+    if niveau_eau < config["seuil_eau"]:
+        print("Niveau d'eau insuffisant, distribution en cours...")
+        activer_pompe_eau(config["quantite_eau"])
+        notifier_activation(client, "eau",config["quantite_eau"], "automatique")
+
+
+def notifier_activation(client, type_distributeur, quantite, declencheur):
+    """Publie une notification MQTT pour signaler l'activation d'un moteur ou d'une pompe."""
+    topic = f"smartpaws/historique"  # Construire le topic dynamiquement
+    message = {
+        "type": type_distributeur,
+        "quantite": quantite,
+        "declencheur" :  declencheur
+    }
+    try:
+        client.publish(topic, json.dumps(message))
+        print(f"Notification envoyée sur {topic} : {message}")
+    except Exception as e:
+        print(f"Erreur lors de la publication de l'activation : {e}")
+
 def publier_donnees(client) : 
     global mesure_en_cours
     mesure_en_cours = True  # Indiquer qu'une mesure est en cours
@@ -197,19 +268,43 @@ def publier_donnees(client) :
 
 # Fonction de callback pour traiter les messages reçus
 def on_message(topic, msg):
+    global config 
     global mesure_en_cours
-    if topic == mqtt_command_topic.encode() and msg.decode() == "mesurer_stock" and not mesure_en_cours:
-        print("Commande reçue pour mesurer le niveau")
-        publier_donnees(client)  # Appeler la fonction de publication des données
-        verifier_connexion_mqtt()
+    if topic == mqtt_command_topic.encode() :
+        command = msg.decode()
+
+        if command == "mesurer_stock" and not mesure_en_cours:
+            print("Commande reçue pour mesurer le niveau")
+            publier_donnees(client)
+            verifier_connexion_mqtt()
+
+        elif command == "distribuer_croquettes":
+            print("Commande reçue : distribuer croquettes")
+            activer_moteur_croquettes(config["quantite_croquettes"])
+            notifier_activation(client, "croquettes",config["quantite_croquettes"], "manuel")
+
+
+        # Commande pour distribuer de l'eau
+        elif command == "distribuer_eau":
+            print("Commande reçue : distribuer eau")
+            activer_pompe_eau(config["quantite_eau"])
+            notifier_activation(client, "eau",config["quantite_eau"], "manuel")
+
+        elif command.startswith("update_params"):
+            try:
+                # Exemple de message : update_params{"quantite_croquettes": 50, "quantite_eau": 200}
+                params = json.loads(command[len("update_params"):])  # Extrait le JSON après le préfixe
+                config["quantite_croquettes"] = params.get("quantite_croquettes", config["quantite_croquettes"])
+                config["quantite_eau"] = params.get("quantite_eau", config["quantite_eau"])
+                print(f"Paramètres mis à jour : {config}")
+            except Exception as e:
+                print(f"Erreur dans l'analyse des paramètres : {e}")
+
 
 
 
 
 # FONCTIONS DE VERIFICATIONS pour augmenter la résilience aux pannes
-
-
-
 
 def verifier_connexion_mqtt():
     try:
@@ -226,8 +321,8 @@ def redemarrer_systeme():
 
 
 
-
 def main():
+    global config
     
     wifi_connected = config_wifi.wifi_setup()
 
@@ -247,7 +342,7 @@ def main():
         # Étalonnage du capteur de poids
         global zero
         zero = etalonnage_zero(nb_mesures)
-        print(f"Étalonnage terminé, zéro = {zero}")
+        
 
         # Connexion MQTT et publication des données
         global client
@@ -256,12 +351,8 @@ def main():
             
             while True:
                 client.check_msg()  # Vérifie les messages MQTT en attente
-                # Déclenche la publication si le moteur s'active
-                if moteur and not mesure_en_cours:
-                    print("Détection de l'activation du moteur")
-                    publier_donnees(client)
-                    verifier_connexion_mqtt()
-                time.sleep(1)
+                verifier_seuils_et_distribuer()
+                time.sleep(3)
 
         except KeyboardInterrupt:
             client.disconnect()
