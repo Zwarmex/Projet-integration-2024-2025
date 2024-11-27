@@ -1,9 +1,11 @@
 import { Button } from "@mui/material";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FoodHistory, Header, WaterHistory } from "../Containers";
 
 const HistoriquePage: React.FC = () => {
 	const [isWater, setIsWater] = useState(true);
+	const navigate = useNavigate();
 	return (
 		<div className="h-full w-screen">
 			<Header />

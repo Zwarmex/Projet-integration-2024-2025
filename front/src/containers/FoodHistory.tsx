@@ -93,7 +93,7 @@ const FoodHistory: React.FC = () => {
 	};
 
 	return (
-		<div>
+		<div className="max-h-96 w-auto">
 			<div>
 				<Button
 					onClick={() => setChartType("daily")}
