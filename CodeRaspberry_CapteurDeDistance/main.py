@@ -16,20 +16,19 @@ mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le
 mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
 mqtt_command_topic = "smartpaws/commandes"  # Topic pour recevoir les commandes
 
-
 # Paramètres du capteur de poids
 conversion = 200  # Coefficient pour convertir en grammes
 nb_mesures = 5  # Nombre de mesures pour calculer la moyenne
 hx = hx711(Pin(28), Pin(27))  # Connexions HX711 : CLK à GP28, DAT à GP27
 hx.set_power(hx711.power.pwr_up)
 hx.set_gain(hx711.gain.gain_128)
+
 zero = None  # Cette variable sera définie après l'étalonnage
 
-# Initialisation du capteur et des LEDs
+# Initialisation du capteur et des 
 trig = Pin(17, Pin.OUT)
 echo = Pin(16, Pin.IN, Pin.PULL_DOWN)
-led_rouge = Pin(18, Pin.OUT)
-led_verte = Pin(19, Pin.OUT)
+
 
 
 # Ajout du moteur (utilisé ici comme un simple détecteur d’activation)
@@ -47,7 +46,8 @@ poids_min_g = 0
 # Ajouter une variable globale pour contrôler les mesures
 mesure_en_cours = False
 
-
+# Déclaration des pins pour le bouton
+bouton_friandise = Pin(22, Pin.IN, Pin.PULL_DOWN)  # Bouton avec pull-down
 
 
 
@@ -59,8 +59,8 @@ def charger_config():
     except Exception as e:
         print(f"Erreur de chargement du fichier de configuration: {e}")
         config = {}
-    config.setdefault("seuil_croquettes", 50)  # En grammes
-    config.setdefault("seuil_eau", 100)  # En millilitres
+    config.setdefault("seuil_croquettes", -50)  # En grammes
+    config.setdefault("seuil_eau", -100)  # En millilitres
     config.setdefault("quantite_croquettes", 30)  # Quantité par défaut
     config.setdefault("quantite_eau", 100)  # Quantité par défaut
     return config
@@ -165,18 +165,29 @@ def mesurer_poids():
 
 
 def mesurer_gamelle_croquettes():
-    """Placeholder pour mesurer le poids des croquettes dans la gamelle."""
     print("Mesure de la gamelle de croquettes")
-    # Utiliser un capteur HX711 dédié
-    return 101
-    pass
+    hx2 = hx711(Pin(1), Pin(0))  # clock broche GP14, data broche GP15
+    hx2.set_power(hx711.power.pwr_up)
+    hx2.set_gain(hx711.gain.gain_128) # valeurs possibles 128, 64 ou 32.
+    zero1 = -248000
+    conversionCroquettes = 170.0 
+    poids =  hx2.get_value() # on prend la mesure
+    poids = (poids - zero1) / conversion  # conversion en grammes   
+    print('masse: ' , round(poids), 'g')  # affichage 
+    return poids if poids else None
 
 def mesurer_gamelle_eau():
     """Placeholder pour mesurer le poids de l'eau dans la gamelle."""
     print("Mesure de la gamelle d'eau")
-    # Utiliser un capteur HX711 dédié
-    return 101
-    pass
+    zero2 = -625000
+    conversionEau = -170.0 
+    hx1 = hx711(Pin(14), Pin(15))  # clock broche GP14, data broche GP15
+    hx1.set_power(hx711.power.pwr_up)
+    hx1.set_gain(hx711.gain.gain_128) # valeurs possibles 128, 64 ou 32.
+    poids =  hx1.get_value() # on prend la mesure
+    poids = (poids - zero2) / conversionEau  # conversion en grammes   
+    print('masse: ' , round(poids), 'g')  # affichage 
+    return poids if poids else None
 
 def activer_moteur_croquettes(duree):
     """Active le moteur pour distribuer des croquettes."""
@@ -214,9 +225,31 @@ def verifier_seuils_et_distribuer():
         notifier_activation(client, "eau",config["quantite_eau"], "automatique")
 
 
+def  moteur_friandise(): 
+    """Moteur pour friandise"""
+
+    pass
+
+def distribuer_friandise():
+    """Distribue une friandise lorsqu'on appuie sur le bouton et envoie une notification."""
+    print("Bouton friandise détecté, distribution en cours...")
+    
+
+    moteur_friandise()
+    
+    # Envoyer la notification MQTT
+    message = {
+        "event": "bouton_friandise_appuyé"
+    }
+    try:
+        client.publish("smartpaws/historique", json.dumps(message))
+        print(f"Notification envoyée : {message}")
+    except Exception as e:
+        print(f"Erreur lors de la notification bouton friandise : {e}")
+
 def notifier_activation(client, type_distributeur, quantite, declencheur):
     """Publie une notification MQTT pour signaler l'activation d'un moteur ou d'une pompe."""
-    topic = f"smartpaws/historique"  # Construire le topic dynamiquement
+    topic = f"smartpaws/historique"  
     message = {
         "type": type_distributeur,
         "quantite": quantite,
@@ -256,13 +289,6 @@ def publier_donnees(client) :
     print("Publication des données:", json_data)
     client.publish(mqtt_publish_topic, json_data)
     
-    # Mise à jour des LEDs en fonction du niveau
-    if pourcentage_croquettes < 20:
-        led_rouge.value(1)
-        led_verte.value(0)
-    else:
-        led_rouge.value(0)
-        led_verte.value(1)
 
     mesure_en_cours = False  # Réinitialiser l'état une fois la mesure terminée
 
@@ -323,7 +349,10 @@ def redemarrer_systeme():
 
 def main():
     global config
-    
+
+    dernier_verif_temps = time.ticks_ms()  
+    intervalle_verification = 3000  
+
     wifi_connected = config_wifi.wifi_setup()
 
     if wifi_connected :
@@ -350,9 +379,15 @@ def main():
         try:
             
             while True:
-                client.check_msg()  # Vérifie les messages MQTT en attente
-                verifier_seuils_et_distribuer()
-                time.sleep(3)
+                client.check_msg()  # Vérifie les messages MQTT en attente  
+                temps_actuel = time.ticks_ms()
+                if time.ticks_diff(temps_actuel, dernier_verif_temps) >= intervalle_verification:
+                    verifier_seuils_et_distribuer()
+                    dernier_verif_temps = temps_actuel  # Mise à jour de l'horodatage       
+                
+                if bouton_friandise.value() == 1:  # Si le bouton est pressé
+                    distribuer_friandise()
+                time.sleep(0.1)
 
         except KeyboardInterrupt:
             client.disconnect()
@@ -362,4 +397,6 @@ def main():
 
 
 main()
+
+
 
