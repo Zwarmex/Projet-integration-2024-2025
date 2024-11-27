@@ -77,7 +77,7 @@ mqttClient.on("message", (topic, message) => {
 
 // Endpoint pour déclencher une mesure de niveau
 app.get("/api/mesure_stock", (req, res) => {
-  mqttClient.publish("smartpaws/mesure_stock", "mesurer_stock"); // Envoie la commande au Raspberry Pi
+  mqttClient.publish("smartpaws/commandes", "mesurer_stock"); // Envoie la commande au Raspberry Pi
   res.json({ message: "Commande de mesure du stock envoyée au Raspberry Pi" });
 });
 
