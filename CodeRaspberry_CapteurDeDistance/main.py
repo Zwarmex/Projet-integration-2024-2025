@@ -9,7 +9,7 @@ import tls # type: ignore
 from hx711 import hx711 # type: ignore
 import ujson # type: ignore
 import config_wifi
-
+import stepper
 
 # Paramètres MQTT 
 mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
@@ -19,9 +19,6 @@ mqtt_command_topic = "smartpaws/commandes"  # Topic pour recevoir les commandes
 # Paramètres du capteur de poids
 conversion = 200  # Coefficient pour convertir en grammes
 nb_mesures = 5  # Nombre de mesures pour calculer la moyenne
-hx = hx711(Pin(28), Pin(27))  # Connexions HX711 : CLK à GP28, DAT à GP27
-hx.set_power(hx711.power.pwr_up)
-hx.set_gain(hx711.gain.gain_128)
 
 zero = None  # Cette variable sera définie après l'étalonnage
 
@@ -47,9 +44,22 @@ poids_min_g = 0
 mesure_en_cours = False
 
 # Déclaration des pins pour le bouton
-bouton_friandise = Pin(22, Pin.IN, Pin.PULL_DOWN)  # Bouton avec pull-down
+bouton_friandise = Pin(13, Pin.IN, Pin.PULL_UP)  # Bouton avec pull-down
+# Initialisation de l'état précédent du bouton
+dernier_etat_bouton = 1  # 1 car PULL_UP utilisé (bouton relâché au repos)
 
 
+
+# Définit les pins pour le moteur pas à pas
+IN1 = 2
+IN2 = 3
+IN3 = 4
+IN4 = 5
+
+# Initialise le moteur en mode demi-pas
+stepper_motor = stepper.HalfStepMotor.frompins(IN1, IN2, IN3, IN4)
+stepper_motor.stepms = 1
+stepper_motor.reset()
 
 def charger_config():
     try:
@@ -61,8 +71,8 @@ def charger_config():
         config = {}
     config.setdefault("seuil_croquettes", -50)  # En grammes
     config.setdefault("seuil_eau", -100)  # En millilitres
-    config.setdefault("quantite_croquettes", 30)  # Quantité par défaut
-    config.setdefault("quantite_eau", 100)  # Quantité par défaut
+    config.setdefault("quantite_croquettes", "petite")  # Quantité par défaut
+    config.setdefault("quantite_eau", "petite")  # Quantité par défaut
     return config
 
 
@@ -149,17 +159,23 @@ def calculer_pourcentage_eau(poids, poids_max_g, poids_min_g):
         return round(pourcentage, 0)
 
 def etalonnage_zero(nb_mesures):
+    global hx
     total = 0
     for _ in range(nb_mesures):
         total += hx.get_value()
     return total / nb_mesures
 
 def mesurer_poids():
+    hx = hx711(Pin(28), Pin(27))  # Connexions HX711 : CLK à GP28, DAT à GP27
+    hx.set_power(hx711.power.pwr_up)
+    hx.set_gain(hx711.gain.gain_128)
     total = 0
+    zero3 = 52500
     for _ in range(nb_mesures):
         total += hx.get_value()
     valeur_moyenne = total / nb_mesures
-    poids = (valeur_moyenne - zero) / conversion  # Conversion en grammes
+    poids = (valeur_moyenne - zero3) / conversion  # Conversion en grammes
+    print(poids)
     return poids if poids else None
 
 
@@ -172,7 +188,7 @@ def mesurer_gamelle_croquettes():
     zero1 = -248000
     conversionCroquettes = 170.0 
     poids =  hx2.get_value() # on prend la mesure
-    poids = (poids - zero1) / conversion  # conversion en grammes   
+    poids = (poids - zero1) / conversionCroquettes  # conversion en grammes   
     print('masse: ' , round(poids), 'g')  # affichage 
     return poids if poids else None
 
@@ -190,8 +206,31 @@ def mesurer_gamelle_eau():
     return poids if poids else None
 
 def activer_moteur_croquettes(duree):
-    """Active le moteur pour distribuer des croquettes."""
-    # Utiliser le GPIO dédié pour une durée donnée
+
+    tours = {
+        "petite": 1,  # 1 quart de tour
+        "moyenne": 2, # 2 quarts de tour
+        "grande": 3   # 3 quarts de tour
+    }
+
+    if duree not in tours:
+        print(f"Quantité non reconnue : {duree}. Utilisez 'petite', 'moyenne' ou 'grande'.")
+        return
+
+    # Nombre de cycles à exécuter
+    cycles = tours[duree]
+
+    for _ in range(cycles):
+        # Effectue un quart de tour dans le sens horaire
+        print("Moteur : Quart de tour horaire")
+        stepper_motor.step(1024)  # 1024 pas = environ un quart de tour
+
+
+        # Retour à la position initiale
+        print("Moteur : Retour à la position initiale")
+        stepper_motor.step(-1024)
+
+
     if not mesure_en_cours:
         print("Détection de l'activation du moteur")
         publier_donnees(client)
@@ -237,16 +276,19 @@ def distribuer_friandise():
 
     moteur_friandise()
     
-    # Envoyer la notification MQTT
+
+        
+def notifier_friandise(client):
+    topic = f"smartpaws/historique" 
     message = {
-        "event": "bouton_friandise_appuyé"
+        "event": "bouton_friandise_appuye"
     }
     try:
-        client.publish("smartpaws/historique", json.dumps(message))
+        client.publish(topic, json.dumps(message))
         print(f"Notification envoyée : {message}")
     except Exception as e:
         print(f"Erreur lors de la notification bouton friandise : {e}")
-
+        
 def notifier_activation(client, type_distributeur, quantite, declencheur):
     """Publie une notification MQTT pour signaler l'activation d'un moteur ou d'une pompe."""
     topic = f"smartpaws/historique"  
@@ -318,7 +360,7 @@ def on_message(topic, msg):
 
         elif command.startswith("update_params"):
             try:
-                # Exemple de message : update_params{"quantite_croquettes": 50, "quantite_eau": 200}
+                # Exemple de message : update_params{"quantite_croquettes": grande, "quantite_eau": 200}
                 params = json.loads(command[len("update_params"):])  # Extrait le JSON après le préfixe
                 config["quantite_croquettes"] = params.get("quantite_croquettes", config["quantite_croquettes"])
                 config["quantite_eau"] = params.get("quantite_eau", config["quantite_eau"])
@@ -350,6 +392,7 @@ def redemarrer_systeme():
 def main():
     global config
 
+
     dernier_verif_temps = time.ticks_ms()  
     intervalle_verification = 3000  
 
@@ -370,7 +413,7 @@ def main():
 
         # Étalonnage du capteur de poids
         global zero
-        zero = etalonnage_zero(nb_mesures)
+        # zero = etalonnage_zero(nb_mesures)
         
 
         # Connexion MQTT et publication des données
@@ -380,13 +423,22 @@ def main():
             
             while True:
                 client.check_msg()  # Vérifie les messages MQTT en attente  
+                verifier_connexion_mqtt()
                 temps_actuel = time.ticks_ms()
                 if time.ticks_diff(temps_actuel, dernier_verif_temps) >= intervalle_verification:
                     verifier_seuils_et_distribuer()
                     dernier_verif_temps = temps_actuel  # Mise à jour de l'horodatage       
                 
-                if bouton_friandise.value() == 1:  # Si le bouton est pressé
-                    distribuer_friandise()
+                global dernier_etat_bouton
+
+                # Vérification de l'état du bouton
+                etat_courant_bouton = bouton_friandise.value()
+                if etat_courant_bouton == 0 and dernier_etat_bouton == 1:  # Flanc descendant détecté
+                    distribuer_friandise()  # Appel de la fonction pour distribuer une friandise
+                    notifier_friandise(client)
+
+                # Mise à jour de l'état précédent
+                dernier_etat_bouton = etat_courant_bouton
                 time.sleep(0.1)
 
         except KeyboardInterrupt:
@@ -397,6 +449,7 @@ def main():
 
 
 main()
+
 
 
 
