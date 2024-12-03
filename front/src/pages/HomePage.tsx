@@ -77,7 +77,7 @@ const HomePage: React.FC = () => {
 	}, []);
 
 	return (
-		<Box className="h-auto bg-bg flex flex-col gap-9">
+		<Box className="h-full bg-bg flex flex-col">
 			<Header />
 			<Box>
 				<Box className="pb-12 p-3">
