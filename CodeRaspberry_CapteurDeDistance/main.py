@@ -40,6 +40,10 @@ poids_max_g = 500
 poids_min_g = 0
 
 
+# Ajout du compteur global pour les friandises
+compteur_friandises = 0  # Compteur pour les friandises distribuées
+dernier_reset_compteur = time.time()  # Timestamp pour la dernière réinitialisation
+
 # Ajouter une variable globale pour contrôler les mesures
 mesure_en_cours = False
 
@@ -75,6 +79,7 @@ def charger_config():
     config.setdefault("quantite_eau", "petite")  # Quantité par défaut
     config.setdefault("distribution_auto_eau","True")
     config.setdefault("distribution_auto_croquettes","True")
+    config.setdefault("limite_friandise",5)
     return config
 
 
@@ -275,17 +280,53 @@ def  moteur_friandise():
 
 def distribuer_friandise():
     """Distribue une friandise lorsqu'on appuie sur le bouton et envoie une notification."""
+    global compteur_friandises
+
+    # Vérifie si la limite de friandises a été atteinte
+    if compteur_friandises >= config["limite_friandise"]:
+        print("Limite quotidienne de friandises atteinte.")
+        notifier_friandise_limite(client)  # Notifie que la limite a été atteinte
+        return
+
     print("Bouton friandise détecté, distribution en cours...")
+    compteur_friandises += 1
+    notifier_friandise(client)
     
 
     moteur_friandise()
     
+def notifier_friandise_limite(client):
+    """Notifie lorsque la limite quotidienne de friandises est atteinte."""
+    topic = f"smartpaws/historique" 
+    message = {
+        "event": "limite_friandise_atteinte",
+        "compteur": compteur_friandises,
+        "limite": config["limite_friandise"]
+    }
+    try:
+        client.publish(topic, json.dumps(message))
+        print(f"Notification envoyée : {message}")
+    except Exception as e:
+        print(f"Erreur lors de la notification limite friandise : {e}")
 
+
+def verifier_et_reinitialiser_compteur():
+    """Vérifie si 24 heures se sont écoulées depuis le dernier reset et réinitialise le compteur."""
+    global compteur_friandises, dernier_reset_compteur
+    temps_actuel = time.time()
+
+    # Vérifie si 24 heures (86400 secondes) se sont écoulées
+    if temps_actuel - dernier_reset_compteur >= 86400:
+        compteur_friandises = 0
+        dernier_reset_compteur = temps_actuel  # Mise à jour du dernier reset
+        print("Le compteur de friandises a été réinitialisé.")
         
 def notifier_friandise(client):
     topic = f"smartpaws/historique" 
     message = {
-        "event": "bouton_friandise_appuye"
+        "event": "bouton_friandise_appuye",
+        "compteur": compteur_friandises,
+        "limite": config["limite_friandise"]
     }
     try:
         client.publish(topic, json.dumps(message))
@@ -372,6 +413,7 @@ def on_message(topic, msg):
                 config["seuil_croquettes"] = params.get("seuil_croquettes", config["seuil_croquettes"])
                 config["distribution_auto_eau"] = params.get("distribution_auto_eau", config["distribution_auto_eau"])
                 config["distribution_auto_croquettes"] = params.get("distribution_auto_croquettes", config["distribution_auto_croquettes"])
+                config["limite_friandise"] = params.get("limite_friandise", config["limite_friandise"])
                 print(f"Paramètres mis à jour : {config}")
             except Exception as e:
                 print(f"Erreur dans l'analyse des paramètres : {e}")
@@ -443,8 +485,7 @@ def main():
                 etat_courant_bouton = bouton_friandise.value()
                 if etat_courant_bouton == 0 and dernier_etat_bouton == 1:  # Flanc descendant détecté
                     distribuer_friandise()  # Appel de la fonction pour distribuer une friandise
-                    notifier_friandise(client)
-
+                verifier_et_reinitialiser_compteur()
                 # Mise à jour de l'état précédent
                 dernier_etat_bouton = etat_courant_bouton
                 time.sleep(0.1)
