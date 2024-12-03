@@ -1,320 +1,239 @@
-import {
-	Box,
-	Button,
-	FormControlLabel,
-	Grid,
-	MenuItem,
-	Paper,
-	Select,
-	SelectChangeEvent,
-	Switch,
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableRow,
-	TextField,
-	Typography,
-} from "@mui/material";
-import {
-	CategoryScale,
-	Chart as ChartJS,
-	Legend,
-	LinearScale,
-	LineElement,
-	PointElement,
-	Title,
-	Tooltip,
-} from "chart.js";
 import React, { useState } from "react";
-import { Line } from "react-chartjs-2";
+import {
+  Box,
+  Button,
+  FormControlLabel,
+  Grid,
+  Paper,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Switch,
+  TextField,
+  Typography,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import { Header } from "../Containers";
 
-ChartJS.register(
-	CategoryScale,
-	LinearScale,
-	PointElement,
-	LineElement,
-	Title,
-	Tooltip,
-	Legend
-);
-
 const SettingsPage: React.FC = () => {
-	const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-	const [notificationLevel, setNotificationLevel] = useState("moyen");
-	const [autoFeedEnabled, setAutoFeedEnabled] = useState(true);
-	const [autoWaterEnabled, setAutoWaterEnabled] = useState(true);
-	const [feedTime, setFeedTime] = useState("08:00");
-	const [waterTime, setWaterTime] = useState("09:00");
+  // Centralisation de l'état
+  const [settings, setSettings] = useState({
+    autoFeedEnabled: true,
+    autoWaterEnabled: true,
+    feedThreshold: 20, // Seuil pour la nourriture (en grammes)
+    waterThreshold: 20, // Seuil pour l'eau (en millilitres)
+    feedQuantity: "Petite", // Quantité de distribution de nourriture
+    waterQuantity: "Petite", // Quantité de distribution d'eau
+    dailyTreatLimit: 5, // Limite quotidienne de friandises
+  });
 
-	const [reportPeriod, setReportPeriod] = useState("journalier");
-	const [feedingLogs, setFeedingLogs] = useState<any[]>([]);
+  const [openSnackbar, setOpenSnackbar] = useState(false); // État pour gérer le toast
+  const [error, setError] = useState<string | null>(null); // Gestion des erreurs
 
-	const handleNotificationToggle = () => {
-		setNotificationsEnabled(!notificationsEnabled);
-	};
+  // Gestion des changements d'état pour les Switches
+  const handleToggle = (key: keyof typeof settings) => {
+    setSettings((prevSettings) => ({
+      ...prevSettings,
+      [key]: !prevSettings[key],
+    }));
+  };
 
-	const handleNotificationLevelChange = (
-		event: SelectChangeEvent<string>
-	) => {
-		setNotificationLevel(event.target.value as string);
-	};
+  // Gestion des champs de saisie ou de sélection
+  const handleInputChange = (
+    key: keyof typeof settings,
+    value: string | number
+  ) => {
+    // Validation des entrées pour empêcher des valeurs négatives
+    if (
+      (key === "feedThreshold" || key === "waterThreshold") &&
+      Number(value) < 0
+    ) {
+      setError("Les seuils doivent être des valeurs positives.");
+      return;
+    }
+    if (key === "dailyTreatLimit" && Number(value) < 1) {
+      setError("La limite quotidienne de friandises doit être au moins de 1.");
+      return;
+    }
+    setError(null); // Réinitialiser l'erreur si tout est correct
+    setSettings((prevSettings) => ({
+      ...prevSettings,
+      [key]: value,
+    }));
+  };
 
-	const handleAutoFeedToggle = () => {
-		setAutoFeedEnabled(!autoFeedEnabled);
-	};
+  const handleSave = async () => {
+    try {
+      // Format des données à envoyer
+      const payload = {
+        limite_friandise: settings.dailyTreatLimit,
+        seuil_eau: settings.autoWaterEnabled ? settings.waterThreshold : -100,
+        seuil_croquettes: settings.autoFeedEnabled
+          ? settings.feedThreshold
+          : -100,
+        distribution_auto_eau: settings.autoWaterEnabled,
+        distribution_auto_croquettes: settings.autoFeedEnabled,
+      };
 
-	const handleAutoWaterToggle = () => {
-		setAutoWaterEnabled(!autoWaterEnabled);
-	};
+      // Appel API pour envoyer les paramètres au backend
+      const response = await fetch("http://localhost:5050/api/update-params", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-	const handleFeedTimeChange = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		setFeedTime(event.target.value);
-	};
+      if (response.ok) {
+        console.log("Paramètres envoyés avec succès !");
+        setOpenSnackbar(true); // Afficher le toast de confirmation
+      } else {
+        console.error("Erreur lors de l'envoi des paramètres.");
+      }
+    } catch (error) {
+      console.error("Erreur réseau :", error);
+    }
+  };
 
-	const handleWaterTimeChange = (
-		event: React.ChangeEvent<HTMLInputElement>
-	) => {
-		setWaterTime(event.target.value);
-	};
+  return (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        backgroundColor: "#D7C4A3",
+      }}
+    >
+      <Header />
 
-	const handleReportPeriodChange = (event: SelectChangeEvent<string>) => {
-		setReportPeriod(event.target.value);
-		simulateFeedingLogs(event.target.value);
-	};
+      <Paper elevation={3} sx={{ padding: 4, maxWidth: 600, margin: "auto" }}>
+        <Grid container spacing={3}>
+          {/* Distribution Automatique de Nourriture */}
+          <Grid item xs={12}>
+            <Typography variant="h6">
+              Distribution Automatique de Nourriture
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settings.autoFeedEnabled}
+                  onChange={() => handleToggle("autoFeedEnabled")}
+                />
+              }
+              label="Activer la Distribution Automatique"
+            />
+            {/* Champs de seuil affichés uniquement si autoFeedEnabled */}
+            {settings.autoFeedEnabled && (
+              <Box sx={{ marginTop: 2 }}>
+                <Typography variant="subtitle1">
+                  Seuil de Nourriture (en grammes)
+                </Typography>
+                <TextField
+                  type="number"
+                  value={settings.feedThreshold}
+                  onChange={(e) =>
+                    handleInputChange("feedThreshold", Number(e.target.value))
+                  }
+                  sx={{ width: 150 }}
+                />
+              </Box>
+            )}
+          </Grid>
 
-	const getRandomNumber = (min: number, max: number) => {
-		return Math.floor(Math.random() * (max - min + 1)) + min;
-	};
+          {/* Distribution Automatique d'Eau */}
+          <Grid item xs={12}>
+            <Typography variant="h6">Distribution Automatique d'Eau</Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={settings.autoWaterEnabled}
+                  onChange={() => handleToggle("autoWaterEnabled")}
+                />
+              }
+              label="Activer la Distribution Automatique"
+            />
+            {/* Champs de seuil affichés uniquement si autoWaterEnabled */}
+            {settings.autoWaterEnabled && (
+              <Box sx={{ marginTop: 2 }}>
+                <Typography variant="subtitle1">
+                  Seuil d'Eau (en millilitres)
+                </Typography>
+                <TextField
+                  type="number"
+                  value={settings.waterThreshold}
+                  onChange={(e) =>
+                    handleInputChange("waterThreshold", Number(e.target.value))
+                  }
+                  sx={{ width: 150 }}
+                />
+              </Box>
+            )}
+          </Grid>
 
-	const simulateFeedingLogs = (period: string) => {
-		let logs: { date: string; foodAmount: number; waterAmount: number }[] =
-			[];
-		const currentDate = new Date();
+          {/* Quantité de distribution d'eau et nourriture */}
 
-		if (period === "journalier") {
-			logs = [
-				{
-					date: currentDate.toLocaleDateString(),
-					foodAmount: getRandomNumber(80, 120), // Génère un nombre aléatoire entre 80g et 120g
-					waterAmount: getRandomNumber(150, 250), // Génère un nombre aléatoire entre 150ml et 250ml
-				},
-			];
-		} else if (period === "hebdomadaire") {
-			logs = Array.from({ length: 7 }, (_, i) => ({
-				date: new Date(
-					currentDate.setDate(currentDate.getDate() - i)
-				).toLocaleDateString(),
-				foodAmount: getRandomNumber(80, 120), // Génère un nombre aléatoire entre 80g et 120g
-				waterAmount: getRandomNumber(150, 250), // Génère un nombre aléatoire entre 150ml et 250ml
-			}));
-		} else if (period === "mensuel") {
-			logs = Array.from({ length: 30 }, (_, i) => ({
-				date: new Date(
-					currentDate.setDate(currentDate.getDate() - i)
-				).toLocaleDateString(),
-				foodAmount: getRandomNumber(80, 120), // Génère un nombre aléatoire entre 80g et 120g
-				waterAmount: getRandomNumber(150, 250), // Génère un nombre aléatoire entre 150ml et 250ml
-			}));
-		}
+          {/* Limite Quotidienne de Friandises */}
+          <Grid item xs={12}>
+            <Typography variant="h6">
+              Limite Quotidienne de Friandises
+            </Typography>
+            <TextField
+              type="number"
+              value={settings.dailyTreatLimit}
+              onChange={(e) =>
+                handleInputChange("dailyTreatLimit", Number(e.target.value))
+              }
+              sx={{ width: 150 }}
+              InputProps={{
+                inputProps: { min: 1 }, // Limite minimale de 1
+              }}
+            />
+          </Grid>
 
-		setFeedingLogs(logs);
-	};
+          {/* Bouton Enregistrer */}
+          <Grid item xs={12} textAlign="center">
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSave}
+              disabled={!!error} // Désactiver si une erreur est présente
+            >
+              Enregistrer les Paramètres
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
 
-	const chartData = {
-		labels: feedingLogs.map((log) => log.date),
-		datasets: [
-			{
-				label: "Nourriture (g)",
-				data: feedingLogs.map((log) => log.foodAmount),
-				borderColor: "rgba(255, 99, 132, 1)",
-				backgroundColor: "rgba(255, 99, 132, 0.2)",
-			},
-			{
-				label: "Eau (ml)",
-				data: feedingLogs.map((log) => log.waterAmount),
-				borderColor: "rgba(54, 162, 235, 1)",
-				backgroundColor: "rgba(54, 162, 235, 0.2)",
-			},
-		],
-	};
+      {/* Message de confirmation */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          Paramètres enregistrés avec succès !
+        </Alert>
+      </Snackbar>
 
-	const chartOptions = {
-		responsive: true,
-		plugins: {
-			legend: {
-				position: "top" as const,
-			},
-			title: {
-				display: true,
-				text: "Consommation de Nourriture et d'Eau",
-			},
-		},
-	};
-
-	return (
-		<Box
-			sx={{
-				minHeight: "100vh",
-				backgroundColor: "#D7C4A3",
-			}}>
-			<Header />
-
-			<Paper
-				elevation={3}
-				sx={{ padding: 4, maxWidth: 600, margin: "auto" }}>
-				<Grid container spacing={3}>
-					{/* Notifications */}
-					<Grid item xs={12}>
-						<Typography variant="h6">Notifications</Typography>
-						<FormControlLabel
-							control={
-								<Switch
-									checked={notificationsEnabled}
-									onChange={handleNotificationToggle}
-								/>
-							}
-							label="Activer les Notifications"
-						/>
-						{notificationsEnabled && (
-							<Box sx={{ marginTop: 2 }}>
-								<Typography>Niveau de Notifications</Typography>
-								<Select
-									value={notificationLevel}
-									onChange={handleNotificationLevelChange}
-									displayEmpty
-									sx={{ minWidth: 200 }}>
-									<MenuItem value="faible">Faible</MenuItem>
-									<MenuItem value="moyen">Moyen</MenuItem>
-									<MenuItem value="élevé">Élevé</MenuItem>
-								</Select>
-							</Box>
-						)}
-					</Grid>
-
-					{/* Distribution Automatique de Nourriture */}
-					<Grid item xs={12}>
-						<Typography variant="h6">
-							Distribution Automatique de Nourriture
-						</Typography>
-						<FormControlLabel
-							control={
-								<Switch
-									checked={autoFeedEnabled}
-									onChange={handleAutoFeedToggle}
-								/>
-							}
-							label="Activer la Distribution Automatique"
-						/>
-						{autoFeedEnabled && (
-							<Box sx={{ marginTop: 2 }}>
-								<Typography>Heure de Distribution</Typography>
-								<TextField
-									type="time"
-									value={feedTime}
-									onChange={handleFeedTimeChange}
-									sx={{ width: 150 }}
-									InputLabelProps={{ shrink: true }}
-								/>
-							</Box>
-						)}
-					</Grid>
-
-					{/* Distribution Automatique d'Eau */}
-					<Grid item xs={12}>
-						<Typography variant="h6">
-							Distribution Automatique d'Eau
-						</Typography>
-						<FormControlLabel
-							control={
-								<Switch
-									checked={autoWaterEnabled}
-									onChange={handleAutoWaterToggle}
-								/>
-							}
-							label="Activer la Distribution Automatique"
-						/>
-						{autoWaterEnabled && (
-							<Box sx={{ marginTop: 2 }}>
-								<Typography>Heure de Distribution</Typography>
-								<TextField
-									type="time"
-									value={waterTime}
-									onChange={handleWaterTimeChange}
-									sx={{ width: 150 }}
-									InputLabelProps={{ shrink: true }}
-								/>
-							</Box>
-						)}
-					</Grid>
-
-					{/* Sélection de la période des relevés */}
-					<Grid item xs={12}>
-						<Typography variant="h6">
-							Relevés des Habitudes Alimentaires
-						</Typography>
-						<Select
-							value={reportPeriod}
-							onChange={handleReportPeriodChange}
-							sx={{ minWidth: 200 }}>
-							<MenuItem value="journalier">Journalier</MenuItem>
-							<MenuItem value="hebdomadaire">
-								Hebdomadaire
-							</MenuItem>
-							<MenuItem value="mensuel">Mensuel</MenuItem>
-						</Select>
-					</Grid>
-
-					{/* Tableau des relevés */}
-					{feedingLogs.length > 0 && (
-						<Grid item xs={12}>
-							<Table>
-								<TableHead>
-									<TableRow>
-										<TableCell>Date</TableCell>
-										<TableCell>
-											Quantité de Nourriture
-										</TableCell>
-										<TableCell>Quantité d'Eau</TableCell>
-									</TableRow>
-								</TableHead>
-								<TableBody>
-									{feedingLogs.map((log, index) => (
-										<TableRow key={index}>
-											<TableCell>{log.date}</TableCell>
-											<TableCell>
-												{log.foodAmount} g
-											</TableCell>
-											<TableCell>
-												{log.waterAmount} ml
-											</TableCell>
-										</TableRow>
-									))}
-								</TableBody>
-							</Table>
-						</Grid>
-					)}
-
-					{/* Graphique */}
-					<Grid item xs={12}>
-						{feedingLogs.length > 0 && (
-							<Line data={chartData} options={chartOptions} />
-						)}
-					</Grid>
-
-					{/* Bouton Enregistrer */}
-					<Grid item xs={12} textAlign="center">
-						<Button variant="contained" color="primary">
-							Enregistrer les Paramètres
-						</Button>
-					</Grid>
-				</Grid>
-			</Paper>
-		</Box>
-	);
+      {/* Gestion des erreurs */}
+      {error && (
+        <Snackbar
+          open={!!error}
+          autoHideDuration={10000} // Affichage prolongé à 10 secondes
+          onClose={() => setError(null)}
+        >
+          <Alert
+            severity="error"
+            onClose={() => setError(null)} // Permet à l'utilisateur de fermer l'erreur
+            sx={{ width: "100%" }}
+          >
+            {error}
+          </Alert>
+        </Snackbar>
+      )}
+    </Box>
+  );
 };
 
 export default SettingsPage;
