@@ -87,6 +87,14 @@ app.get("/api/mesure_stock", (req, res) => {
 	});
 });
 
+// Endpoint pour mettre à jour les paramètres
+app.get("/api/commandes", (req, res) => {
+	mqttClient.publish("smartpaws/commandes", "update_params"); // Envoie la commande au Raspberry Pi
+	res.json({
+		message: "Mise à jour des paramètres",
+	});
+});
+
 // API pour renvoyer les niveaux de croquette actuels
 app.get("/api/niveau", (req, res) => {
 	res.json(niveauxActuels);
