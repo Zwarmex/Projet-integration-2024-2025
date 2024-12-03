@@ -68,6 +68,8 @@ const SettingsPage: React.FC = () => {
       // Format des données à envoyer
       const payload = {
         limite_friandise: settings.dailyTreatLimit,
+        quantite_croquettes: settings.feedQuantity.toLowerCase(),
+        quantite_eau: settings.waterQuantity.toLowerCase(),
         seuil_eau: settings.autoWaterEnabled ? settings.waterThreshold : -100,
         seuil_croquettes: settings.autoFeedEnabled
           ? settings.feedThreshold
@@ -168,7 +170,37 @@ const SettingsPage: React.FC = () => {
           </Grid>
 
           {/* Quantité de distribution d'eau et nourriture */}
-
+          <Grid item xs={12}>
+            <Typography variant="h6">
+              Quantité de Distribution d'Eau et de Croquettes
+            </Typography>
+            <Box sx={{ marginTop: 2 }}>
+              <Select
+                value={settings.feedQuantity}
+                onChange={(e: SelectChangeEvent<string>) =>
+                  handleInputChange("feedQuantity", e.target.value)
+                }
+                sx={{ minWidth: 150 }}
+              >
+                <MenuItem value="Petite">Petite</MenuItem>
+                <MenuItem value="Moyenne">Moyenne</MenuItem>
+                <MenuItem value="Grande">Grande</MenuItem>
+              </Select>
+            </Box>
+            <Box sx={{ marginTop: 2 }}>
+              <Select
+                value={settings.waterQuantity}
+                onChange={(e: SelectChangeEvent<string>) =>
+                  handleInputChange("waterQuantity", e.target.value)
+                }
+                sx={{ minWidth: 150 }}
+              >
+                <MenuItem value="Petite">Petite</MenuItem>
+                <MenuItem value="Moyenne">Moyenne</MenuItem>
+                <MenuItem value="Grande">Grande</MenuItem>
+              </Select>
+            </Box>
+          </Grid>
           {/* Limite Quotidienne de Friandises */}
           <Grid item xs={12}>
             <Typography variant="h6">
