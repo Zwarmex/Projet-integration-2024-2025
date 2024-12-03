@@ -73,6 +73,8 @@ def charger_config():
     config.setdefault("seuil_eau", -100)  # En millilitres
     config.setdefault("quantite_croquettes", "petite")  # Quantité par défaut
     config.setdefault("quantite_eau", "petite")  # Quantité par défaut
+    config.setdefault("distribution_auto_eau","True")
+    config.setdefault("distribution_auto_croquettes","True")
     return config
 
 
@@ -175,7 +177,6 @@ def mesurer_poids():
         total += hx.get_value()
     valeur_moyenne = total / nb_mesures
     poids = (valeur_moyenne - zero3) / conversion  # Conversion en grammes
-    print(poids)
     return poids if poids else None
 
 
@@ -185,7 +186,7 @@ def mesurer_gamelle_croquettes():
     hx2 = hx711(Pin(1), Pin(0))  # clock broche GP14, data broche GP15
     hx2.set_power(hx711.power.pwr_up)
     hx2.set_gain(hx711.gain.gain_128) # valeurs possibles 128, 64 ou 32.
-    zero1 = -248000
+    zero1 = -249500
     conversionCroquettes = 170.0 
     poids =  hx2.get_value() # on prend la mesure
     poids = (poids - zero1) / conversionCroquettes  # conversion en grammes   
@@ -195,7 +196,7 @@ def mesurer_gamelle_croquettes():
 def mesurer_gamelle_eau():
     """Placeholder pour mesurer le poids de l'eau dans la gamelle."""
     print("Mesure de la gamelle d'eau")
-    zero2 = -625000
+    zero2 = -628500
     conversionEau = -170.0 
     hx1 = hx711(Pin(14), Pin(15))  # clock broche GP14, data broche GP15
     hx1.set_power(hx711.power.pwr_up)
@@ -206,7 +207,8 @@ def mesurer_gamelle_eau():
     return poids if poids else None
 
 def activer_moteur_croquettes(duree):
-
+    
+    print("Détection de l'activation du moteur")
     tours = {
         "petite": 1,  # 1 quart de tour
         "moyenne": 2, # 2 quarts de tour
@@ -232,7 +234,6 @@ def activer_moteur_croquettes(duree):
 
 
     if not mesure_en_cours:
-        print("Détection de l'activation du moteur")
         publier_donnees(client)
         verifier_connexion_mqtt()
     pass
@@ -249,19 +250,22 @@ def activer_pompe_eau(duree):
 
 def verifier_seuils_et_distribuer():
     """Vérifie les niveaux et déclenche la distribution si nécessaire."""
-    print("Vérification des seuils")
-    niveau_croquettes = mesurer_gamelle_croquettes()
-    niveau_eau = mesurer_gamelle_eau()
 
-    if niveau_croquettes < config["seuil_croquettes"]:
-        print("Niveau de croquettes insuffisant, distribution en cours...")
-        activer_moteur_croquettes(config["quantite_croquettes"])
-        notifier_activation(client, "croquettes",config["quantite_croquettes"], "automatique")
+    if config["distribution_auto_croquettes"]=="True": 
+        niveau_croquettes = mesurer_gamelle_croquettes()
+        if niveau_croquettes < config["seuil_croquettes"]:
+            print("Vérification des seuils croquettes")
+            print("Niveau de croquettes insuffisant, distribution en cours...")
+            activer_moteur_croquettes(config["quantite_croquettes"])
+            notifier_activation(client, "croquettes",config["quantite_croquettes"], "automatique")
 
-    if niveau_eau < config["seuil_eau"]:
-        print("Niveau d'eau insuffisant, distribution en cours...")
-        activer_pompe_eau(config["quantite_eau"])
-        notifier_activation(client, "eau",config["quantite_eau"], "automatique")
+    if config["distribution_auto_eau"] == "True": 
+        niveau_eau = mesurer_gamelle_eau()
+        if niveau_eau < config["seuil_eau"]:
+            print("Vérification des seuils croquettes ")
+            print("Niveau d'eau insuffisant, distribution en cours...")
+            activer_pompe_eau(config["quantite_eau"])
+            notifier_activation(client, "eau",config["quantite_eau"], "automatique")
 
 
 def  moteur_friandise(): 
@@ -360,10 +364,14 @@ def on_message(topic, msg):
 
         elif command.startswith("update_params"):
             try:
-                # Exemple de message : update_params{"quantite_croquettes": grande, "quantite_eau": 200}
+                # Exemple de message : update_params{"quantite_croquettes": grande, "quantite_eau": petite}
                 params = json.loads(command[len("update_params"):])  # Extrait le JSON après le préfixe
                 config["quantite_croquettes"] = params.get("quantite_croquettes", config["quantite_croquettes"])
                 config["quantite_eau"] = params.get("quantite_eau", config["quantite_eau"])
+                config["seuil_eau"] = params.get("seuil_eau", config["seuil_eau"])
+                config["seuil_croquettes"] = params.get("seuil_croquettes", config["seuil_croquettes"])
+                config["distribution_auto_eau"] = params.get("distribution_auto_eau", config["distribution_auto_eau"])
+                config["distribution_auto_croquettes"] = params.get("distribution_auto_croquettes", config["distribution_auto_croquettes"])
                 print(f"Paramètres mis à jour : {config}")
             except Exception as e:
                 print(f"Erreur dans l'analyse des paramètres : {e}")
