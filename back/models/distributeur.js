@@ -3,8 +3,13 @@ const mongoose = require("mongoose");
 // ToDo : CROQUETTE ??
 const NiveauHistoriqueSchema = new mongoose.Schema({
 	type: { type: String, enum: ["croquettes", "eau"], required: true },
-	niveau: { type: Number, required: true },
-	horodatage: { type: Date, default: Date.now },
+  niveau: [
+    {
+      eau: { type: Number, required: true },
+      croquettes: { type: Number, required: true },
+    },
+  ],
+  horodatage: { type: Date, default: Date.now },
 });
 // ToDo : EAU ??
 const DistributionHistoriqueSchema = new mongoose.Schema({
