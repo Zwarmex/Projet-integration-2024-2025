@@ -108,8 +108,10 @@ app.post("/api/update-params", (req, res) => {
       quantite_eau,
       seuil_eau,
       seuil_croquettes,
-      distribution_auto_eau,
-      distribution_auto_croquettes,
+      distribution_auto_eau: distribution_auto_eau ? "True" : "False",
+      distribution_auto_croquettes: distribution_auto_croquettes
+        ? "True"
+        : "False",
     };
 
     // Convertir en string JSON
