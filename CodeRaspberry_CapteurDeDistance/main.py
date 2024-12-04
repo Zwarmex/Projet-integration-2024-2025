@@ -11,10 +11,13 @@ import ujson # type: ignore
 import config_wifi
 import stepper
 
+distributeur_id = "distributeurPrototype"
+
 # Paramètres MQTT 
 mqtt_client_id = "chicagolil_raspberrypi_picow"  # Un identifiant unique pour le client MQTT
-mqtt_publish_topic = "smartpaws/niveau"  # Topic sur lequel publier les données
-mqtt_command_topic = "smartpaws/commandes"  # Topic pour recevoir les commandes
+mqtt_publish_topic = f"smartpaws/niveau/{distributeur_id}"  # Topic sur lequel publier les données
+mqtt_command_topic = f"smartpaws/commandes/{distributeur_id}"  # Topic pour recevoir les commandes
+mqtt_historic_topic = f"smartpaws/historique/{distributeur_id}" # Topic pour envoyer les evenements du distributeur
 
 # Paramètres du capteur de poids
 conversion = 200  # Coefficient pour convertir en grammes
@@ -297,7 +300,7 @@ def distribuer_friandise():
     
 def notifier_friandise_limite(client):
     """Notifie lorsque la limite quotidienne de friandises est atteinte."""
-    topic = f"smartpaws/historique" 
+    topic = mqtt_historic_topic
     message = {
         "event": "limite_friandise_atteinte",
         "compteur": compteur_friandises,
@@ -322,7 +325,7 @@ def verifier_et_reinitialiser_compteur():
         print("Le compteur de friandises a été réinitialisé.")
         
 def notifier_friandise(client):
-    topic = f"smartpaws/historique" 
+    topic = mqtt_historic_topic
     message = {
         "event": "bouton_friandise_appuye",
         "compteur": compteur_friandises,
@@ -336,7 +339,7 @@ def notifier_friandise(client):
         
 def notifier_activation(client, type_distributeur, quantite, declencheur):
     """Publie une notification MQTT pour signaler l'activation d'un moteur ou d'une pompe."""
-    topic = f"smartpaws/historique"  
+    topic = mqtt_historic_topic  
     message = {
         "type": type_distributeur,
         "quantite": quantite,
