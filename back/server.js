@@ -87,6 +87,30 @@ app.get("/api/mesure_stock", (req, res) => {
   });
 });
 
+// Endpoint pour déclencher une distribution de croquettes
+app.get("/api/distribuer_croquettes", (req, res) => {
+  mqttClient.publish("smartpaws/commandes", "distribuer_croquettes"); // Envoie la commande au Raspberry Pi
+  res.json({
+    message: "Commande de distribution de croquettes envoyée au Raspberry Pi",
+  });
+});
+
+// Endpoint pour déclencher une distribution d'eau
+app.get("/api/distribuer_eau", (req, res) => {
+  mqttClient.publish("smartpaws/commandes", "distribuer_eau"); // Envoie la commande au Raspberry Pi
+  res.json({
+    message: "Commande de distribution d'eau envoyée au Raspberry Pi",
+  });
+});
+
+// Endpoint pour déclencher une distribution de friandises
+app.get("/api/distribuer_friandises", (req, res) => {
+  mqttClient.publish("smartpaws/commandes", "distribuer_friandises"); // Envoie la commande au Raspberry Pi
+  res.json({
+    message: "Commande de distribution de friandises envoyée au Raspberry Pi",
+  });
+});
+
 // Endpoint pour mettre à jour les paramètres
 app.post("/api/update-params", (req, res) => {
   try {
