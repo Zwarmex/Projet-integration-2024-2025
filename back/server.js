@@ -13,6 +13,9 @@ dotenv.config(); // Charger les variables d'environnement
 const PORT = process.env.PORT || 5050;
 const app = express();
 
+// Id du distributeur, statique pour le moment mais dynamique une fois l'authentification implémentée
+const distributeurId = "distributeurPrototype";
+
 const options = {
   host: process.env.MQTT_HOST,
   port: Number(process.env.MQTT_PORT),
@@ -62,18 +65,18 @@ const mqttClient = mqtt.connect(options); // Adresse du MQTT local
 // Abonnement au topics smartpaws/niveau et smartpaws/historique
 mqttClient.on("connect", () => {
   console.log("Connecté au broker MQTT");
-  mqttClient.subscribe("smartpaws/niveau", (err) => {
+  mqttClient.subscribe(`smartpaws/niveau/${distributeurId}`, (err) => {
     if (err) {
       console.error("Erreur d'abonnement au topic MQTT", err);
     } else {
-      console.log("Abonné au topic smartpaws/niveau");
+      console.log(`Abonné au topic smartpaws/niveau/${distributeurId}`);
     }
   });
-  mqttClient.subscribe("smartpaws/historique", (err) => {
+  mqttClient.subscribe(`smartpaws/historique/${distributeurId}`, (err) => {
     if (err) {
       console.error("Erreur d'abonnement au topic MQTT", err);
     } else {
-      console.log("Abonné au topic smartpaws/historique");
+      console.log(`Abonné au topic smartpaws/historique/${distributeurId}`);
     }
   });
 });
@@ -84,12 +87,12 @@ mqttClient.on("error", (error) => {
 
 // Réception des messages publiés sur le topic
 mqttClient.on("message", (topic, message) => {
-  if (topic === "smartpaws/niveau") {
+  if (topic === `smartpaws/niveau/${distributeurId}`) {
     niveauxActuels = JSON.parse(message.toString());
     console.log("Nouveaux niveaux reçus :", niveauxActuels);
     io.emit("niveauUpdate", niveauxActuels);
   }
-  if (topic === "smartpaws/historique") {
+  if (topic === `smartpaws/historique/${distributeurId}`) {
     let data = JSON.parse(message.toString());
     if (data.event === "limite_friandise_atteinte") {
       console.log("Notification :", data);
@@ -103,7 +106,7 @@ mqttClient.on("message", (topic, message) => {
 
 // Endpoint pour déclencher une mesure de niveau
 app.get("/api/mesure_stock", (req, res) => {
-  mqttClient.publish("smartpaws/commandes", "mesurer_stock"); // Envoie la commande au Raspberry Pi
+  mqttClient.publish(`smartpaws/commandes/${distributeurId}`, "mesurer_stock"); // Envoie la commande au Raspberry Pi
   res.json({
     message: "Commande de mesure du stock envoyée au Raspberry Pi",
   });
@@ -111,7 +114,10 @@ app.get("/api/mesure_stock", (req, res) => {
 
 // Endpoint pour déclencher une distribution de croquettes
 app.get("/api/distribuer_croquettes", (req, res) => {
-  mqttClient.publish("smartpaws/commandes", "distribuer_croquettes"); // Envoie la commande au Raspberry Pi
+  mqttClient.publish(
+    `smartpaws/commandes/${distributeurId}`,
+    "distribuer_croquettes"
+  ); // Envoie la commande au Raspberry Pi
   res.json({
     message: "Commande de distribution de croquettes envoyée au Raspberry Pi",
   });
@@ -119,7 +125,7 @@ app.get("/api/distribuer_croquettes", (req, res) => {
 
 // Endpoint pour déclencher une distribution d'eau
 app.get("/api/distribuer_eau", (req, res) => {
-  mqttClient.publish("smartpaws/commandes", "distribuer_eau"); // Envoie la commande au Raspberry Pi
+  mqttClient.publish(`smartpaws/commandes/${distributeurId}`, "distribuer_eau"); // Envoie la commande au Raspberry Pi
   res.json({
     message: "Commande de distribution d'eau envoyée au Raspberry Pi",
   });
@@ -127,7 +133,10 @@ app.get("/api/distribuer_eau", (req, res) => {
 
 // Endpoint pour déclencher une distribution de friandises
 app.get("/api/distribuer_friandises", (req, res) => {
-  mqttClient.publish("smartpaws/commandes", "distribuer_friandises"); // Envoie la commande au Raspberry Pi
+  mqttClient.publish(
+    `smartpaws/commandes/${distributeurId}`,
+    "distribuer_friandises"
+  ); // Envoie la commande au Raspberry Pi
   res.json({
     message: "Commande de distribution de friandises envoyée au Raspberry Pi",
   });
@@ -164,17 +173,21 @@ app.post("/api/update-params", (req, res) => {
     const message = `update_params${JSON.stringify(payload)}`;
 
     // Publier sur le topic MQTT
-    mqttClient.publish("smartpaws/commandes", message, (err) => {
-      if (err) {
-        console.error("Erreur lors de l'envoi du message MQTT:", err);
-        return res.status(500).json({ error: "Erreur MQTT" });
+    mqttClient.publish(
+      `smartpaws/commandes/${distributeurId}`,
+      message,
+      (err) => {
+        if (err) {
+          console.error("Erreur lors de l'envoi du message MQTT:", err);
+          return res.status(500).json({ error: "Erreur MQTT" });
+        }
+        console.log("Message publié avec succès :", message);
+        return res.status(200).json({
+          success: true,
+          message: "Paramètres mis à jour avec succès !",
+        });
       }
-      console.log("Message publié avec succès :", message);
-      return res.status(200).json({
-        success: true,
-        message: "Paramètres mis à jour avec succès !",
-      });
-    });
+    );
   } catch (error) {
     console.error("Erreur lors de la mise à jour des paramètres :", error);
     return res
