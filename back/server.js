@@ -59,11 +59,21 @@ io.on("connection", (socket) => {
 // Configuration du client MQTT
 const mqttClient = mqtt.connect(options); // Adresse du MQTT local
 
+// Abonnement au topics smartpaws/niveau et smartpaws/historique
 mqttClient.on("connect", () => {
   console.log("Connecté au broker MQTT");
   mqttClient.subscribe("smartpaws/niveau", (err) => {
     if (err) {
       console.error("Erreur d'abonnement au topic MQTT", err);
+    } else {
+      console.log("Abonné au topic smartpaws/niveau");
+    }
+  });
+  mqttClient.subscribe("smartpaws/historique", (err) => {
+    if (err) {
+      console.error("Erreur d'abonnement au topic MQTT", err);
+    } else {
+      console.log("Abonné au topic smartpaws/historique");
     }
   });
 });
@@ -74,9 +84,21 @@ mqttClient.on("error", (error) => {
 
 // Réception des messages publiés sur le topic
 mqttClient.on("message", (topic, message) => {
-  niveauxActuels = JSON.parse(message.toString());
-  console.log("Nouveaux niveaux reçus :", niveauxActuels);
-  io.emit("niveauUpdate", niveauxActuels);
+  if (topic === "smartpaws/niveau") {
+    niveauxActuels = JSON.parse(message.toString());
+    console.log("Nouveaux niveaux reçus :", niveauxActuels);
+    io.emit("niveauUpdate", niveauxActuels);
+  }
+  if (topic === "smartpaws/historique") {
+    let data = JSON.parse(message.toString());
+    if (data.event === "limite_friandise_atteinte") {
+      console.log("Notification :", data);
+      io.emit("notification", {
+        type: "limite_friandise",
+        message: Limite atteinte : ${data.compteur}/${data.limite} friandises distribuées aujourd'hui.,
+      });
+    }
+  }
 });
 
 // Endpoint pour déclencher une mesure de niveau
