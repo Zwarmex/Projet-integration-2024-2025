@@ -95,7 +95,7 @@ mqttClient.on("message", (topic, message) => {
       console.log("Notification :", data);
       io.emit("notification", {
         type: "limite_friandise",
-        message: Limite atteinte : ${data.compteur}/${data.limite} friandises distribuées aujourd'hui.,
+        message: `Limite atteinte : ${data.compteur}/${data.limite} friandises distribuées aujourd'hui.`,
       });
     }
   }
