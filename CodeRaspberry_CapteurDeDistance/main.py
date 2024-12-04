@@ -403,6 +403,11 @@ def on_message(topic, msg):
             activer_pompe_eau(config["quantite_eau"])
             notifier_activation(client, "eau",config["quantite_eau"], "manuel")
 
+        elif command == "distribuer_friandises":
+            print("Commande reçue : distribuer_friandises")
+            distribuer_friandise()
+
+
         elif command.startswith("update_params"):
             try:
                 # Exemple de message : update_params{"quantite_croquettes": grande, "quantite_eau": petite}
