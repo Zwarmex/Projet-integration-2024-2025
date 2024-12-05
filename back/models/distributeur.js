@@ -2,12 +2,8 @@ import mongoose from "mongoose";
 
 // ToDo : CROQUETTE ??
 const NiveauHistoriqueSchema = new mongoose.Schema({
-  niveau: [
-    {
-      eau: { type: Number, required: true },
-      croquettes: { type: Number, required: true },
-    },
-  ],
+  eau: { type: Number, required: true },
+  croquettes: { type: Number, required: true },
   horodatage: { type: Date, default: Date.now },
 });
 // ToDo : EAU ??

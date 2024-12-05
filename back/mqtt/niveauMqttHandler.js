@@ -7,39 +7,40 @@ import mongoose from "mongoose";
  * @param {Buffer} message - Le message reçu en MQTT.
  **/
 
-export const distributionMqttHandler = async (topic, message) => {
+export const niveauMqttHandler = async (topic, message) => {
   try {
     if (!mongoose.connection.readyState) {
       console.error("La connexion MongoDB n'est pas prête !");
       return;
     }
-    // Parse le message reçu
-    const payload = JSON.parse(message.toString());
-    const { quantite, type, declencheur } = payload;
-    console.log("Distribution :", payload);
+
+    const payload = JSON.parse(message);
+    console.log("Nouveaux niveaux reçus :", payload);
+    const { croquettes, eau } = payload;
     const distributeurId = topic.split("/")[2];
-    if (!distributeurId) {
-      console.error("Identifiant de distributeur introuvable dans le topic.");
-      return;
-    }
     const result = await Distributeur.findOneAndUpdate(
-      { _id: distributeurId }, // Filtre sur l'identifiant du distributeur
+      { _id: distributeurId },
       {
-        $push: {
-          historiqueDistributions: {
-            quantite: quantite,
-            type: type,
-            declencheur: declencheur,
-            horodatage: new Date(new Date().getTime() + 1 * 60 * 60 * 1000),
-          },
+        niveauxReservoirs: {
+          niveauCroquettes: croquettes,
+          niveauEau: eau,
+          misAJourLe: new Date(new Date().getTime() + 1 * 60 * 60 * 1000),
         },
-      }
+        $push: {
+          historiqueNiveaux: {
+            eau: eau,
+            croquettes: croquettes,
+          },
+          horodatage: new Date(new Date().getTime() + 1 * 60 * 60 * 1000),
+        },
+      },
+      { new: true, useFindAndModify: false } // Options pour retourner le document mis à jour
     );
     if (!result) {
       console.error(`Distributeur avec ID ${distributeurId} introuvable.`);
     } else {
       console.log(
-        `historiqueDistributions mis à jour pour le distributeur ${distributeurId}`
+        `niveauxReservoirs et historiqueNiveaux mis à jour pour le distributeur ${distributeurId}`
       );
     }
   } catch (error) {

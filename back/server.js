@@ -9,6 +9,7 @@ import historiqueNourritureRoutes from "./routes/historique/nourriture.js"; // A
 import recordRoutes from "./routes/record.js"; // Ajout de la route
 import { friandiseMqttHandler } from "./mqtt/friandiseMqttHandler.js";
 import { distributionMqttHandler } from "./mqtt/distributionMqttHandler.js";
+import { niveauMqttHandler } from "./mqtt/niveauMqttHandler.js";
 import { db, connectDB } from "./db/connection.js";
 
 dotenv.config(); // Charger les variables d'environnement
@@ -92,7 +93,7 @@ mqttClient.on("error", (error) => {
 mqttClient.on("message", (topic, message) => {
   if (topic === `smartpaws/niveau/${distributeurId}`) {
     niveauxActuels = JSON.parse(message.toString());
-    console.log("Nouveaux niveaux reçus :", niveauxActuels);
+    niveauMqttHandler(topic, message);
     io.emit("niveauUpdate", niveauxActuels);
   }
   if (topic === `smartpaws/historique/${distributeurId}`) {
@@ -113,7 +114,6 @@ mqttClient.on("message", (topic, message) => {
       }
     }
     if (["petite", "moyenne", "grande"].includes(data.quantite)) {
-      console.log("je suis ici");
       distributionMqttHandler(topic, message);
     }
   }

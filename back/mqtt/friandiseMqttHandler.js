@@ -49,7 +49,7 @@ export const friandiseMqttHandler = async (topic, message) => {
         console.error(`Distributeur avec ID ${distributeurId} introuvable.`);
       } else {
         console.log(
-          ` historiqueComportements à jour pour le distributeur ${distributeurId}`
+          `historiqueComportements mis à jour pour le distributeur ${distributeurId}`
         );
       }
     } else {
