@@ -17,6 +17,7 @@ export const friandiseMqttHandler = async (topic, message) => {
     // Parse le message reçu
     const payload = JSON.parse(message.toString());
     const { event, compteur, limite } = payload;
+    console.log("Evènement :", payload);
     // Vérifie si l'événement est valide
     if (
       event === "limite_friandise_atteinte" ||
@@ -48,7 +49,7 @@ export const friandiseMqttHandler = async (topic, message) => {
         console.error(`Distributeur avec ID ${distributeurId} introuvable.`);
       } else {
         console.log(
-          `Base de données mise à jour pour le distributeur ${distributeurId}`
+          ` historiqueComportements à jour pour le distributeur ${distributeurId}`
         );
       }
     } else {

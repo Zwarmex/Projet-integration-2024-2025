@@ -8,6 +8,7 @@ import historiqueEauRoutes from "./routes/historique/eau.js"; // Ajout de la rou
 import historiqueNourritureRoutes from "./routes/historique/nourriture.js"; // Ajout de la route
 import recordRoutes from "./routes/record.js"; // Ajout de la route
 import { friandiseMqttHandler } from "./mqtt/friandiseMqttHandler.js";
+import { distributionMqttHandler } from "./mqtt/distributionMqttHandler.js";
 import { db, connectDB } from "./db/connection.js";
 
 dotenv.config(); // Charger les variables d'environnement
@@ -96,13 +97,24 @@ mqttClient.on("message", (topic, message) => {
   }
   if (topic === `smartpaws/historique/${distributeurId}`) {
     let data = JSON.parse(message.toString());
-    if (data.event === "limite_friandise_atteinte") {
+    console.log(data);
+    if (
+      ["limite_friandise_atteinte", "bouton_friandise_appuye"].includes(
+        data.event
+      )
+    ) {
       friandiseMqttHandler(topic, message);
-      console.log("Notification :", data);
-      io.emit("notification", {
-        type: "limite_friandise",
-        message: `Limite atteinte : ${data.compteur}/${data.limite} friandises distribuées aujourd'hui.`,
-      });
+      if (data.event === "limite_friandise_atteinte") {
+        console.log("Notification :", data);
+        io.emit("notification", {
+          type: "limite_friandise",
+          message: `Limite atteinte : ${data.compteur}/${data.limite} friandises distribuées aujourd'hui.`,
+        });
+      }
+    }
+    if (["petite", "moyenne", "grande"].includes(data.quantite)) {
+      console.log("je suis ici");
+      distributionMqttHandler(topic, message);
     }
   }
 });
