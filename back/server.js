@@ -7,6 +7,8 @@ import { Server } from "socket.io";
 import historiqueEauRoutes from "./routes/historique/eau.js"; // Ajout de la route
 import historiqueNourritureRoutes from "./routes/historique/nourriture.js"; // Ajout de la route
 import recordRoutes from "./routes/record.js"; // Ajout de la route
+import { friandiseMqttHandler } from "./mqtt/friandiseMqttHandler.js";
+import { db, connectDB } from "./db/connection.js";
 
 dotenv.config(); // Charger les variables d'environnement
 
@@ -95,6 +97,7 @@ mqttClient.on("message", (topic, message) => {
   if (topic === `smartpaws/historique/${distributeurId}`) {
     let data = JSON.parse(message.toString());
     if (data.event === "limite_friandise_atteinte") {
+      friandiseMqttHandler(topic, message);
       console.log("Notification :", data);
       io.emit("notification", {
         type: "limite_friandise",
@@ -202,5 +205,6 @@ app.get("/api/niveau", (req, res) => {
 
 // start the Express server
 server.listen(PORT, () => {
+  connectDB(process.env.ATLAS_URI, "DB");
   console.log(`Server listening on port ${PORT}`);
 });

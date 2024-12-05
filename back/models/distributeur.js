@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 // ToDo : CROQUETTE ??
 const NiveauHistoriqueSchema = new mongoose.Schema({
@@ -35,6 +35,7 @@ const ComportementHistoriqueSchema = new mongoose.Schema({
 
 const DistributeurSchema = new mongoose.Schema(
   {
+    _id: { type: String, required: true },
     proprietaireId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -54,4 +55,4 @@ const DistributeurSchema = new mongoose.Schema(
 
 const Distributeur = mongoose.model("distributeurs", DistributeurSchema);
 
-module.exports = Distributeur;
+export default Distributeur; // Export ES6

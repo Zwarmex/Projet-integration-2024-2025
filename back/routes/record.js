@@ -1,6 +1,6 @@
 import express from "express";
 
-import db from "../db/connection.js";
+import { db } from "../db/connection.js";
 
 // This help convert the id from string to ObjectId for the _id.
 import { ObjectId } from "mongodb";
