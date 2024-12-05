@@ -11,6 +11,7 @@ import { friandiseMqttHandler } from "./mqtt/friandiseMqttHandler.js";
 import { distributionMqttHandler } from "./mqtt/distributionMqttHandler.js";
 import { niveauMqttHandler } from "./mqtt/niveauMqttHandler.js";
 import { db, connectDB } from "./db/connection.js";
+import { enregisterParametres } from "./controllers/settingsController.js";
 
 dotenv.config(); // Charger les variables d'environnement
 
@@ -160,6 +161,8 @@ app.get("/api/distribuer_friandises", (req, res) => {
 // Endpoint pour mettre à jour les paramètres
 app.post("/api/update-params", (req, res) => {
   try {
+    const topic = `smartpaws/commandes/${distributeurId}`;
+
     // Récupérer les paramètres depuis le frontend
     const {
       limite_friandise,
@@ -186,23 +189,19 @@ app.post("/api/update-params", (req, res) => {
 
     // Convertir en string JSON
     const message = `update_params${JSON.stringify(payload)}`;
-
+    enregisterParametres(req.body, topic);
     // Publier sur le topic MQTT
-    mqttClient.publish(
-      `smartpaws/commandes/${distributeurId}`,
-      message,
-      (err) => {
-        if (err) {
-          console.error("Erreur lors de l'envoi du message MQTT:", err);
-          return res.status(500).json({ error: "Erreur MQTT" });
-        }
-        console.log("Message publié avec succès :", message);
-        return res.status(200).json({
-          success: true,
-          message: "Paramètres mis à jour avec succès !",
-        });
+    mqttClient.publish(topic, message, (err) => {
+      if (err) {
+        console.error("Erreur lors de l'envoi du message MQTT:", err);
+        return res.status(500).json({ error: "Erreur MQTT" });
       }
-    );
+      console.log("Message publié avec succès :", message);
+      return res.status(200).json({
+        success: true,
+        message: "Paramètres mis à jour avec succès !",
+      });
+    });
   } catch (error) {
     console.error("Erreur lors de la mise à jour des paramètres :", error);
     return res
