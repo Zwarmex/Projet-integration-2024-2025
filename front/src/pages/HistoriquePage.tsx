@@ -1,7 +1,7 @@
 import { Button } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FoodHistory, Header, WaterHistory } from "../Containers";
+import { FoodHistory, Header, WaterHistory } from "../containers";
 
 const HistoriquePage: React.FC = () => {
   const [isWater, setIsWater] = useState(true);

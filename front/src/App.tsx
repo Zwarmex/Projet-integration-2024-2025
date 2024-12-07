@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { HistoriquePage, HomePage, LoginPage, SettingsPage } from "./Pages";
+import { HistoriquePage, HomePage, LoginPage, SettingsPage } from "./pages";
 import { io } from "socket.io-client";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
