@@ -47,7 +47,7 @@ let niveauxActuels = { croquettes: 0, eau: 0 }; // Stockage temporaire des donn√
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // Adresse du frontend
+    origin: process.env.WEB_SOCKET, // Adresse du frontend
     methods: ["GET", "POST"],
   },
 });
