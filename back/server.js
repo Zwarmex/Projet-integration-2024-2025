@@ -31,6 +31,7 @@ const options = {
 };
 
 app.use(cors());
+
 app.use(express.json());
 app.use("/api/records", recordRoutes);
 app.use("/api/historique-nourriture", historiqueNourritureRoutes);
@@ -62,6 +63,11 @@ io.on("connection", (socket) => {
   socket.on("error", (error) => {
     console.error("Erreur Socket.IO:", error);
   });
+});
+
+app.use((req, res, next) => {
+  console.log(`Requête reçue : ${req.method} ${req.url}`);
+  next();
 });
 
 // Configuration du client MQTT
