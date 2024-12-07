@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
-import { LoginForm } from "../Containers";
-import { Header } from "../Containers";
+import { LoginForm } from "../containers";
+import { Header } from "../containers";
 
 type LoginPageProps = {
   isSigningUp: boolean;

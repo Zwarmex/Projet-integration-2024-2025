@@ -14,7 +14,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Header } from "../Containers";
+import { Header } from "../containers";
 import { useUrl } from "../Context/UrlContext";
 
 const SettingsPage: React.FC = () => {
