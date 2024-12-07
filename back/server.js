@@ -65,6 +65,11 @@ io.on("connection", (socket) => {
   });
 });
 
+app.use((req, res, next) => {
+  console.log(`Requête reçue : ${req.method} ${req.url}`);
+  next();
+});
+
 // Configuration du client MQTT
 const mqttClient = mqtt.connect(options); // Adresse du MQTT local
 
