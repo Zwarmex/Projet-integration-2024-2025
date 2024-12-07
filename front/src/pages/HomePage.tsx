@@ -9,14 +9,16 @@ import {
   Level,
   NotificationsContainer,
 } from "../Containers";
-
-const socket = io("http://localhost:5050", {
-  reconnection: true,
-  reconnectionAttempts: 5, // Nombre d'essais avant de renoncer
-  reconnectionDelay: 2000, // Délai de 2 secondes entre chaque tentative
-});
+import { useUrl } from "../Context/UrlContext";
 
 const HomePage: React.FC = () => {
+  const { url } = useUrl();
+
+  const socket = io(`${url}`, {
+    reconnection: true,
+    reconnectionAttempts: 5, // Nombre d'essais avant de renoncer
+    reconnectionDelay: 2000, // Délai de 2 secondes entre chaque tentative
+  });
   const [niveaux, setNiveaux] = useState({ croquettes: 0, eau: 0 });
   const navigate = useNavigate();
 
@@ -37,7 +39,7 @@ const HomePage: React.FC = () => {
     // Charger les données au montage du composant
     const fetchLevels = async () => {
       try {
-        const response = await fetch("http://localhost:5050/api/niveau"); // Appel API backend pour récuperer le niveau du stock
+        const response = await fetch(`${url}api/niveau`); // Appel API backend pour récuperer le niveau du stock
         if (!response.ok) {
           throw new Error("Erreur lors de la récupération des données");
         }
@@ -52,7 +54,7 @@ const HomePage: React.FC = () => {
     // Déclencher une mesure du stock à chaque visite du site sur le Pico via le backend
     const triggerMesure = async () => {
       try {
-        await fetch("http://localhost:5050/api/mesure_stock"); // Appel API pour déclencher la mesure
+        await fetch(`${url}api/mesure_stock`); // Appel API pour déclencher la mesure
       } catch (error) {
         console.error("Erreur lors du déclenchement de la mesure :", error);
       }
