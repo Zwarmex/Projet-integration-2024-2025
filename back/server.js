@@ -30,12 +30,7 @@ const options = {
   reconnectPeriod: 1000, // Tente de se reconnecter chaque seconde si la connexion est perdue
 };
 
-app.use(
-  cors({
-    origin: "*", // Permet les requêtes de toutes les origines
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+app.use(cors());
 
 app.use(express.json());
 app.use("/api/records", recordRoutes);
@@ -68,15 +63,6 @@ io.on("connection", (socket) => {
   socket.on("error", (error) => {
     console.error("Erreur Socket.IO:", error);
   });
-});
-
-app.get("/test", (req, res) => {
-  res.json({ message: "API is working!" });
-});
-
-app.use((req, res, next) => {
-  console.log(`Requête reçue : ${req.method} ${req.url}`);
-  next();
 });
 
 // Configuration du client MQTT
