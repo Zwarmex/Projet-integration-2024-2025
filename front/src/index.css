@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.root,
+#root,
+#docs-root {
+	--main: #c27647;
+	--bg: #d9ccb0;
+	--text: #fcfbf5;
+	--text-secondary: #bebebe;
+	--success: #407352;
+	--danger: #ac5350;
+	--warning: #d98944;
+	--info: #17a2b8;
+	--light: #f8f9fa;
+	--dark: #343a40;
+	--white: #ffffff;
+	--black: #000000;
+	--input: #d9ab86;
+	--muted: #6c757d;
+	--form: #e3d6ba;
+}
