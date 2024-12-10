@@ -43,8 +43,12 @@ jobs:
         run: |
           cd front
           npm install
-
+          
       # 5. Lint Backend
+      - name: Install ESLint
+        run: |
+          cd back
+          npm install eslint --save-dev
       - name: Lint Backend Code
         run: |
           cd back
