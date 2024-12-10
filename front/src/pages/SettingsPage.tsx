@@ -14,9 +14,11 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Header } from "../Containers";
+import { Header } from "../containers";
+import { useUrl } from "../Context/UrlContext";
 
 const SettingsPage: React.FC = () => {
+  const { url } = useUrl();
   // Centralisation de l'état
   const [settings, setSettings] = useState({
     autoFeedEnabled: true,
@@ -79,7 +81,7 @@ const SettingsPage: React.FC = () => {
       };
 
       // Appel API pour envoyer les paramètres au backend
-      const response = await fetch("http://localhost:5050/api/update-params", {
+      const response = await fetch(`${url}api/update-params`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
