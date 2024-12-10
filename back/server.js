@@ -231,7 +231,8 @@ app.get("/api/niveau", (req, res) => {
 });
 
 // start the Express server
-server.listen(PORT, () => {
-	connectDB(process.env.ATLAS_URI, "DB");
+server.listen(PORT, async () => {
+	await connectDB(); // Connexion à MongoDB
 	console.log(`Server listening on port ${PORT}`);
-});
+  });
+  
