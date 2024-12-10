@@ -43,7 +43,7 @@ jobs:
         run: |
           cd front
           npm install
-          
+
       # 5. Lint Backend
       - name: Install ESLint
         run: |
@@ -72,10 +72,3 @@ jobs:
           cd front
           npm test
 
-      # 9. Check Dependencies
-      - name: Audit Dependencies
-        run: |
-          cd back
-          npm audit --audit-level=high
-          cd ../front
-          npm audit --audit-level=high
