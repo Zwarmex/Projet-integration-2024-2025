@@ -15,7 +15,6 @@ export const niveauMqttHandler = async (topic, message) => {
     }
 
     const payload = JSON.parse(message);
-    console.log("Nouveaux niveaux reçus :", payload);
     const { croquettes, eau } = payload;
     const distributeurId = topic.split("/")[2];
     const result = await Distributeur.findOneAndUpdate(
