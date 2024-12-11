@@ -10,7 +10,7 @@ import {
 } from "chart.js";
 import React, { useEffect, useState } from "react";
 import { useUrl } from "../Context/UrlContext";
-import ChartComponent from "../components/chartComponent";
+import ChartComponent from "../Components/chartComponent";
 ChartJS.register(
 	CategoryScale,
 	LinearScale,

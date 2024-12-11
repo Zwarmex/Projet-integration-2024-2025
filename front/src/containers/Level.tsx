@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import React from "react";
-import { ProgressBar } from "../components";
+import { ProgressBar } from "../Components";
 
 interface LevelProps {
 	label: string;
