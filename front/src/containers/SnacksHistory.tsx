@@ -21,7 +21,7 @@ import ChartComponent, {
 	handlePreviousMonth,
 	handlePreviousWeek,
 	handlePreviousYear,
-} from "../components/chartComponent";
+} from "../components/ChartComponent";
 
 ChartJS.register(
 	CategoryScale,
