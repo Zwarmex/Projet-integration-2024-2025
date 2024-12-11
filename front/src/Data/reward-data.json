@@ -376,47 +376,6 @@
         "heure": "12:00",
         "compteur": 6,
         "limite": 10
-      {
-        "event": "bouton_friandise_appuye",
-        "date": "2024-01-04",
-        "heure": "08:00",
-        "compteur": 1,
-        "limite": 10
-    },
-    {
-        "event": "bouton_friandise_appuye",
-        "date": "2024-01-04",
-        "heure": "09:00",
-        "compteur": 2,
-        "limite": 10
-    },
-    {
-        "event": "bouton_friandise_appuye",
-        "date": "2024-01-04",
-        "heure": "09:30",
-        "compteur": 3,
-        "limite": 10
-    },
-    {
-        "event": "bouton_friandise_appuye",
-        "date": "2024-01-04",
-        "heure": "10:00",
-        "compteur": 4,
-        "limite": 10
-    },
-    {
-        "event": "bouton_friandise_appuye",
-        "date": "2024-01-04",
-        "heure": "11:00",
-        "compteur": 5,
-        "limite": 10
-    },
-    {
-        "event": "bouton_friandise_appuye",
-        "date": "2024-01-04",
-        "heure": "12:00",
-        "compteur": 6,
-        "limite": 10
     },
     {
         "event": "bouton_friandise_appuye",
