@@ -1,5 +1,5 @@
 import { Box } from "@mui/material";
-import { LoginForm, Header } from "../Containers";
+import { Header, LoginForm } from "../containers";
 
 type LoginPageProps = {
 	isSigningUp: boolean;

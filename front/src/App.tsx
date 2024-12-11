@@ -5,7 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { io } from "socket.io-client";
 import { useUrl } from "./Context/UrlContext";
-import { HistoriquePage, HomePage, LoginPage, SettingsPage } from "./Pages";
+import { HistoriquePage, HomePage, LoginPage, SettingsPage } from "./pages";
 
 const App = () => {
 	const { url } = useUrl(); // Déplacez l'appel du hook ici

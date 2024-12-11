@@ -57,7 +57,7 @@ const WaterAndFoodHistory: React.FC = () => {
 
 	const fetchFoodData = async () => {
 		try {
-			const rawFood = await fetch(`${url}/api/historique/nourriture`);
+			const rawFood = await fetch(`${url}api/historique/nourriture`);
 			const food = await rawFood.json();
 			return food;
 		} catch (error) {
@@ -67,7 +67,7 @@ const WaterAndFoodHistory: React.FC = () => {
 	};
 	const fetchWaterData = async () => {
 		try {
-			const rawWater = await fetch(`${url}/api/historique/eau`);
+			const rawWater = await fetch(`${url}api/historique/eau`);
 			const water = await rawWater.json();
 			return water;
 		} catch (error) {
@@ -122,6 +122,12 @@ const WaterAndFoodHistory: React.FC = () => {
 							borderColor: "rgba(255, 99, 132, 1)",
 							backgroundColor: "rgba(255, 99, 132, 0.2)",
 						},
+						{
+							label: "Normal (200g)",
+							data: new Array(feedingLogs.length).fill(200),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+						},
 					],
 				};
 			case "weekly":
@@ -144,6 +150,14 @@ const WaterAndFoodHistory: React.FC = () => {
 							data: Object.values(weeklyData),
 							borderColor: "rgba(255, 99, 132, 1)",
 							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Normal (1400g)",
+							data: new Array(
+								Object.keys(weeklyData).length
+							).fill(1400),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
 						},
 					],
 				};
@@ -170,6 +184,14 @@ const WaterAndFoodHistory: React.FC = () => {
 							borderColor: "rgba(255, 99, 132, 1)",
 							backgroundColor: "rgba(255, 99, 132, 0.2)",
 						},
+						{
+							label: "Normal (5600g)",
+							data: new Array(
+								Object.keys(monthlyData).length
+							).fill(5600),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+						},
 					],
 				};
 			case "yearly":
@@ -191,10 +213,21 @@ const WaterAndFoodHistory: React.FC = () => {
 							borderColor: "rgba(255, 99, 132, 1)",
 							backgroundColor: "rgba(255, 99, 132, 0.2)",
 						},
+						{
+							label: "Normal (67200g)",
+							data: new Array(
+								Object.keys(yearlyData).length
+							).fill(67200),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+						},
 					],
 				};
 			default:
-				return {};
+				return {
+					labels: [],
+					datasets: [],
+				};
 		}
 	};
 
@@ -211,6 +244,12 @@ const WaterAndFoodHistory: React.FC = () => {
 							data: waterLogs.map((log) => log["quantité(mL)"]),
 							borderColor: "rgba(54, 162, 235, 1)",
 							backgroundColor: "rgba(54, 162, 235, 0.2)",
+						},
+						{
+							label: "Normal (200mL)",
+							data: new Array(waterLogs.length).fill(200),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
 						},
 					],
 				};
@@ -234,6 +273,14 @@ const WaterAndFoodHistory: React.FC = () => {
 							data: Object.values(weeklyData),
 							borderColor: "rgba(54, 162, 235, 1)",
 							backgroundColor: "rgba(54, 162, 235, 0.2)",
+						},
+						{
+							label: "Normal (1400mL)",
+							data: new Array(
+								Object.keys(weeklyData).length
+							).fill(1400),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
 						},
 					],
 				};
@@ -260,6 +307,14 @@ const WaterAndFoodHistory: React.FC = () => {
 							borderColor: "rgba(54, 162, 235, 1)",
 							backgroundColor: "rgba(54, 162, 235, 0.2)",
 						},
+						{
+							label: "Normal (5600mL)",
+							data: new Array(
+								Object.keys(monthlyData).length
+							).fill(5600),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+						},
 					],
 				};
 			case "yearly":
@@ -281,10 +336,21 @@ const WaterAndFoodHistory: React.FC = () => {
 							borderColor: "rgba(54, 162, 235, 1)",
 							backgroundColor: "rgba(54, 162, 235, 0.2)",
 						},
+						{
+							label: "Normal (67200mL)",
+							data: new Array(
+								Object.keys(yearlyData).length
+							).fill(67200),
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+						},
 					],
 				};
 			default:
-				return {};
+				return {
+					labels: [],
+					datasets: [],
+				};
 		}
 	};
 
@@ -404,8 +470,8 @@ const WaterAndFoodHistory: React.FC = () => {
 						<span>
 							Semaine{" "}
 							{getWeekRange(
-								currentWeek,
-								new Date().getFullYear()
+								getWeek(currentWeek.toISOString()),
+								currentWeek.getFullYear()
 							)}
 						</span>
 						<Button onClick={handleNextWeek}>
@@ -495,8 +561,8 @@ const WaterAndFoodHistory: React.FC = () => {
 						<span>
 							Semaine{" "}
 							{getWeekRange(
-								currentWeek,
-								new Date().getFullYear()
+								getWeek(currentWeek.toISOString()),
+								currentWeek.getFullYear()
 							)}
 						</span>
 						<Button onClick={handleNextWeek}>

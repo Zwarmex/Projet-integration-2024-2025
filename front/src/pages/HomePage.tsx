@@ -8,7 +8,7 @@ import {
 	Header,
 	Level,
 	NotificationsContainer,
-} from "../Containers";
+} from "../containers";
 import { useUrl } from "../Context/UrlContext";
 
 const HomePage: React.FC = () => {

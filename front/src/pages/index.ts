@@ -1,4 +1,4 @@
-export { default as HistoriquePage } from "./HistoriquePage";
-export { default as HomePage } from "./HomePage";
-export { default as LoginPage } from "./LoginPage";
-export { default as SettingsPage } from "./SettingsPage";
+export { default as HistoriquePage } from "./historiquePage";
+export { default as HomePage } from "./homePage";
+export { default as LoginPage } from "./loginPage";
+export { default as SettingsPage } from "./settingsPage";
