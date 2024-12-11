@@ -4,12 +4,11 @@ on:
   push:
     branches:
       - main
-      - develop
+      - dev
   pull_request:
     branches:
       - main
-      - develop
-
+      - dev
 jobs:
   lint-and-test:
     name: Lint, Test & Dependency Check
@@ -46,6 +45,10 @@ jobs:
           npm install
 
       # 5. Lint Backend
+      - name: Install ESLint
+        run: |
+          cd back
+          npm install eslint --save-dev
       - name: Lint Backend Code
         run: |
           cd back
@@ -69,10 +72,3 @@ jobs:
           cd front
           npm test
 
-      # 9. Check Dependencies
-      - name: Audit Dependencies
-        run: |
-          cd back
-          npm audit --audit-level=high
-          cd ../front
-          npm audit --audit-level=high

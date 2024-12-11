@@ -10,6 +10,7 @@ import {
 } from "chart.js";
 import React, { useEffect, useState } from "react";
 import { useUrl } from "../Context/UrlContext";
+
 import ChartComponent, {
 	getWeek,
 	getWeekRange,
@@ -23,15 +24,6 @@ import ChartComponent, {
 	handlePreviousYear,
 } from "../components/chartComponent";
 
-ChartJS.register(
-	CategoryScale,
-	LinearScale,
-	PointElement,
-	LineElement,
-	Title,
-	Tooltip,
-	Legend
-);
 
 const WaterHistory: React.FC = () => {
 	const [waterLogs, setWaterLogs] = useState<any[]>([]);

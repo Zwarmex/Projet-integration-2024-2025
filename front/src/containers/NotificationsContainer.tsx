@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import React from "react";
-import { NotificationItems } from "../components";
+import { NotificationItems } from "../Components";
 
 const NotificationsContainer: React.FC = () => {
 	return (
