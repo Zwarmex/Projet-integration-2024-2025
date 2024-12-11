@@ -1,5 +1,5 @@
 export { default as ActionContainer } from "./ActionContainer";
-export { default as foodHistory } from "./FoodHistory";
+export { default as FoodHistory } from "./FoodHistory";
 export { default as Header } from "./Header";
 export { default as Level } from "./Level";
 export { default as LoginForm } from "./LoginForm";

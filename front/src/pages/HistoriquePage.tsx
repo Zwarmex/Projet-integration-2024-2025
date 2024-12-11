@@ -7,14 +7,16 @@ import {
 
 const HistoriquePage: React.FC = () => {
 	return (
-		<div className="h-full w-screen overflow-y-scroll">
+		<div className="h-screen w-screen">
 			<Header />
 			<div className="p-5 bg-bg">
-				<div className="flex flex-col">
-					<WaterHistory />
-					<FoodHistory />
+				<div className="w-full flex flex-col items-center">
+					<div className="flex flex-col sm:flex-row">
+						<FoodHistory />
+						<WaterHistory />
+					</div>
+					<SnacksHistory />
 				</div>
-				<SnacksHistory />
 			</div>
 		</div>
 	);
