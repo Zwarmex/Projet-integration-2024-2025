@@ -12,7 +12,102 @@ interface ChartComponentProps {
 	handlePrevious: () => void;
 	handleNext: () => void;
 	periodLabel: string;
+	handleToday: () => void;
 }
+
+export const getWeek = (dateString: string) => {
+	const date = new Date(dateString);
+	const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+	const pastDaysOfYear =
+		(date.getTime() - firstDayOfYear.getTime()) / 86400000;
+	return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+};
+
+export const getWeekRange = (week: number, year: number) => {
+	const firstDayOfYear = new Date(year, 0, 1);
+	const days = (week - 1) * 7;
+	const startDate = new Date(
+		firstDayOfYear.setDate(firstDayOfYear.getDate() + days)
+	);
+	const endDate = new Date(startDate);
+	endDate.setDate(startDate.getDate() + 6);
+	const format = (date: Date) =>
+		`${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
+			.toString()
+			.padStart(2, "0")}`;
+	return `${format(startDate)} au ${format(endDate)}`;
+};
+
+export const formatDate = (dateString: string, timeString: string) => {
+	const date = new Date(dateString);
+	const day = date.getDate().toString().padStart(2, "0");
+	const month = (date.getMonth() + 1).toString().padStart(2, "0");
+	return `${day}-${month}, ${timeString}`;
+};
+
+export const handlePreviousDay = (
+	currentDay: Date,
+	setCurrentDay: (date: Date) => void
+) => {
+	setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)));
+};
+
+export const handleNextDay = (
+	currentDay: Date,
+	setCurrentDay: (date: Date) => void
+) => {
+	setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)));
+};
+
+export const handlePreviousWeek = (
+	currentWeek: Date,
+	setCurrentWeek: (date: Date) => void
+) => {
+	setCurrentWeek(new Date(currentWeek.setDate(currentWeek.getDate() - 7)));
+};
+
+export const handleNextWeek = (
+	currentWeek: Date,
+	setCurrentWeek: (date: Date) => void
+) => {
+	setCurrentWeek(new Date(currentWeek.setDate(currentWeek.getDate() + 7)));
+};
+
+export const handlePreviousMonth = (
+	currentMonth: Date,
+	setCurrentMonth: (date: Date) => void
+) => {
+	setCurrentMonth(
+		new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))
+	);
+};
+
+export const handleNextMonth = (
+	currentMonth: Date,
+	setCurrentMonth: (date: Date) => void
+) => {
+	setCurrentMonth(
+		new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))
+	);
+};
+
+export const handlePreviousYear = (
+	currentYear: Date,
+	setCurrentYear: (date: Date) => void
+) => {
+	setCurrentYear(
+		new Date(currentYear.setFullYear(currentYear.getFullYear() - 1))
+	);
+};
+
+export const handleNextYear = (
+	currentYear: Date,
+	setCurrentYear: (date: Date) => void
+) => {
+	setCurrentYear(
+		new Date(currentYear.setFullYear(currentYear.getFullYear() + 1))
+	);
+};
 
 const ChartComponent: React.FC<ChartComponentProps> = ({
 	chartType,
@@ -24,9 +119,10 @@ const ChartComponent: React.FC<ChartComponentProps> = ({
 	handlePrevious,
 	handleNext,
 	periodLabel,
+	handleToday,
 }) => {
 	return (
-		<div className="max-h-96 w-auto">
+		<div className="p-10">
 			<div>
 				<Button
 					onClick={() => setChartType("daily")}
@@ -58,9 +154,12 @@ const ChartComponent: React.FC<ChartComponentProps> = ({
 				<Button
 					onClick={
 						handlePrevious
-					}>{`Précédent ${periodLabel}`}</Button>
+					}>{`${periodLabel} Précédent`}</Button>
 				<span>{currentPeriod}</span>
-				<Button onClick={handleNext}>{`Suivant ${periodLabel}`}</Button>
+				<Button onClick={handleNext}>{`${periodLabel} Suivant`}</Button>
+				{chartType === "daily" && (
+					<Button onClick={handleToday}>Aujourd'hui</Button>
+				)}
 			</div>
 		</div>
 	);

@@ -1,4 +1,3 @@
-import { Button } from "@mui/material";
 import {
 	CategoryScale,
 	Chart as ChartJS,
@@ -10,8 +9,19 @@ import {
 	Tooltip,
 } from "chart.js";
 import React, { useEffect, useState } from "react";
-import { Line } from "react-chartjs-2";
 import { useUrl } from "../Context/UrlContext";
+import ChartComponent, {
+	getWeek,
+	getWeekRange,
+	handleNextDay,
+	handleNextMonth,
+	handleNextWeek,
+	handleNextYear,
+	handlePreviousDay,
+	handlePreviousMonth,
+	handlePreviousWeek,
+	handlePreviousYear,
+} from "../components/chartComponent";
 
 ChartJS.register(
 	CategoryScale,
@@ -24,21 +34,25 @@ ChartJS.register(
 );
 
 const SnacksHistory: React.FC = () => {
-	const url = useUrl().url;
+	const [snacksLogs, setSnacksLogs] = useState<any[]>([]);
 	const [snacksChartType, setSnacksChartType] = useState<string>("daily");
 	const [currentDay, setCurrentDay] = useState(new Date());
 	const [currentWeek, setCurrentWeek] = useState(new Date());
 	const [currentMonth, setCurrentMonth] = useState(new Date());
 	const [currentYear, setCurrentYear] = useState(new Date());
-	const [snacksLogs, setSnacksLogs] = useState<any[]>([]);
+	const [limiteFriandise, setLimiteFriandise] = useState<number>(0);
+	const url = useUrl().url;
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				const snacksData = await fetchSnacksData();
+				const limiteFriandiseData = await fetchSnacksLimite();
+
 				if (snacksData.length === 0) {
-					throw Error("No food data found");
+					throw Error("No snacks data found");
 				}
+				setLimiteFriandise(limiteFriandiseData);
 				setSnacksLogs(snacksData);
 			} catch (error) {
 				console.log("Error fetching data:", error);
@@ -53,163 +67,20 @@ const SnacksHistory: React.FC = () => {
 			const snacks = await rawSnacks.json();
 			return snacks;
 		} catch (error) {
-			console.log("Error fetching food data:", error);
+			console.log("Error fetching snacks data:", error);
 			return [];
 		}
 	};
-
-	const getWeek = (dateString: string) => {
-		const date = new Date(dateString);
-		const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-		const pastDaysOfYear =
-			(date.getTime() - firstDayOfYear.getTime()) / 86400000;
-		return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-	};
-
-	const getWeekRange = (week: number, year: number) => {
-		const firstDayOfYear = new Date(year, 0, 1);
-		const days = (week - 1) * 7;
-		const startDate = new Date(
-			firstDayOfYear.setDate(firstDayOfYear.getDate() + days)
-		);
-		const endDate = new Date(startDate);
-		endDate.setDate(startDate.getDate() + 6);
-		const format = (date: Date) =>
-			`${date.getDate().toString().padStart(2, "0")}-${(
-				date.getMonth() + 1
-			)
-				.toString()
-				.padStart(2, "0")}`;
-		return `${format(startDate)} au ${format(endDate)}`;
-	};
-
-	const formatDate = (dateString: string, timeString: string) => {
-		const date = new Date(dateString);
-		const day = date.getDate().toString().padStart(2, "0");
-		const month = (date.getMonth() + 1).toString().padStart(2, "0");
-		return `${day}-${month}, ${timeString}`;
-	};
-
-	const getFoodChartData = () => {
-		switch (snacksChartType) {
-			case "daily":
-				return {
-					labels: snacksLogs.map((log) =>
-						formatDate(log.date, log.heure)
-					),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: snacksLogs.map((log) => log["quantité(g)"]),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (5)",
-							data: new Array(snacksLogs.length).fill(5),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			case "weekly":
-				const weeklyData = snacksLogs.reduce((acc, log) => {
-					const week = getWeek(log.date);
-					if (!acc[week]) {
-						acc[week] = 0;
-					}
-					acc[week] += log["quantité(g)"];
-					return acc;
-				}, {});
-
-				return {
-					labels: Object.keys(weeklyData).map((week) =>
-						getWeekRange(parseInt(week), new Date().getFullYear())
-					),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: Object.values(weeklyData),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (1400g)",
-							data: new Array(
-								Object.keys(weeklyData).length
-							).fill(1400),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			case "monthly":
-				const monthlyData = snacksLogs.reduce((acc, log) => {
-					const month = new Date(log.date).getMonth();
-					if (!acc[month]) {
-						acc[month] = 0;
-					}
-					acc[month] += log["quantité(g)"];
-					return acc;
-				}, {});
-
-				return {
-					labels: Object.keys(monthlyData).map((month) =>
-						new Date(0, parseInt(month)).toLocaleString("default", {
-							month: "long",
-						})
-					),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: Object.values(monthlyData),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (5600g)",
-							data: new Array(
-								Object.keys(monthlyData).length
-							).fill(5600),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			case "yearly":
-				const yearlyData = snacksLogs.reduce((acc, log) => {
-					const year = new Date(log.date).getFullYear();
-					if (!acc[year]) {
-						acc[year] = 0;
-					}
-					acc[year] += log["quantité(g)"];
-					return acc;
-				}, {});
-
-				return {
-					labels: Object.keys(yearlyData),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: Object.values(yearlyData),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (67200g)",
-							data: new Array(
-								Object.keys(yearlyData).length
-							).fill(67200),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			default:
-				return {
-					labels: [],
-					datasets: [],
-				};
+	const fetchSnacksLimite = async () => {
+		try {
+			const rawLimiteFriandise = await fetch(
+				`${url}api/limite/friandises`
+			);
+			const limiteFriandiseData = await rawLimiteFriandise.json();
+			return limiteFriandiseData;
+		} catch (error) {
+			console.log("Error fetching snacks limit:", error);
+			return [];
 		}
 	};
 
@@ -226,155 +97,294 @@ const SnacksHistory: React.FC = () => {
 		},
 		scales: {
 			y: {
+				beginAtZero: true,
 				ticks: {
-					// Retirer les nombres à virgules
-					callback: function (tickValue: string | number) {
-						return Number.isInteger(tickValue) ? tickValue : null;
+					callback: function (value: any) {
+						return Number(value).toFixed(0); // Enlever les valeurs à virgule
 					},
 				},
-				// Changer l'échelle du graph
-				suggestedMin: 0, // Valeur minimale
-				suggestedMax: 10, // Valeur maximale (ajustez selon vos besoins)
+				min: 0,
+				max: snacksChartType === "yearly" ? 200 : 25,
+				stepSize: snacksChartType === "yearly" ? 10 : 1,
 			},
 		},
 	});
 
-	const handlePreviousDay = () => {
-		setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)));
+	const getCurrentPeriod = (chartType: string) => {
+		switch (chartType) {
+			case "daily":
+				return currentDay.toLocaleDateString("fr-FR", {
+					weekday: "short",
+					day: "2-digit",
+					month: "short",
+					year: "numeric",
+				});
+			case "weekly":
+				return `Semaine ${getWeekRange(
+					getWeek(currentWeek.toISOString()),
+					currentWeek.getFullYear()
+				)}`;
+			case "monthly":
+				return `${currentMonth.toLocaleString("default", {
+					month: "long",
+				})} ${currentMonth.getFullYear()}`;
+			case "yearly":
+				return currentYear.getFullYear().toString();
+			default:
+				return "";
+		}
 	};
 
-	const handleNextDay = () => {
-		setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)));
+	const handlePreviousPeriod = (chartType: string) => {
+		switch (chartType) {
+			case "daily":
+				return () => handlePreviousDay(currentDay, setCurrentDay);
+			case "weekly":
+				return () => handlePreviousWeek(currentWeek, setCurrentWeek);
+			case "monthly":
+				return () => handlePreviousMonth(currentMonth, setCurrentMonth);
+			case "yearly":
+				return () => handlePreviousYear(currentYear, setCurrentYear);
+			default:
+				return () => {};
+		}
 	};
 
-	const handlePreviousWeek = () => {
-		setCurrentWeek(
-			new Date(currentWeek.setDate(currentWeek.getDate() - 7))
-		);
+	const handleNextPeriod = (chartType: string) => {
+		switch (chartType) {
+			case "daily":
+				return () => handleNextDay(currentDay, setCurrentDay);
+			case "weekly":
+				return () => handleNextWeek(currentWeek, setCurrentWeek);
+			case "monthly":
+				return () => handleNextMonth(currentMonth, setCurrentMonth);
+			case "yearly":
+				return () => handleNextYear(currentYear, setCurrentYear);
+			default:
+				return () => {};
+		}
 	};
 
-	const handleNextWeek = () => {
-		setCurrentWeek(
-			new Date(currentWeek.setDate(currentWeek.getDate() + 7))
-		);
+	const getPeriodLabel = (chartType: string) => {
+		switch (chartType) {
+			case "daily":
+				return "Jour";
+			case "weekly":
+				return "Semaine";
+			case "monthly":
+				return "Mois";
+			case "yearly":
+				return "Année";
+			default:
+				return "";
+		}
 	};
 
-	const handlePreviousMonth = () => {
-		setCurrentMonth(
-			new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))
-		);
-	};
+	const getSnacksChartData = () => {
+		switch (snacksChartType) {
+			case "daily":
+				return {
+					labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+					datasets: [
+						{
+							label: "Friandises",
+							data: Array.from({ length: 24 }, (_, i) =>
+								snacksLogs
+									.filter(
+										(log) =>
+											new Date(
+												log.date
+											).toDateString() ===
+												currentDay.toDateString() &&
+											parseInt(
+												log.heure.split(":")[0],
+												10
+											) === i
+									)
+									.reduce(
+										(acc, log) => acc + log["quantité"],
+										0
+									)
+							),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(24).fill(limiteFriandise), // Exemple de limite journalière
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			case "weekly":
+				const startOfWeek = new Date(currentWeek);
+				startOfWeek.setDate(
+					startOfWeek.getDate() - startOfWeek.getDay() + 1
+				); // Définir le lundi de la semaine actuelle
 
-	const handleNextMonth = () => {
-		setCurrentMonth(
-			new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))
-		);
+				return {
+					labels: Array.from({ length: 7 }, (_, i) => {
+						const day = new Date(startOfWeek);
+						day.setDate(startOfWeek.getDate() + i);
+						return day.toLocaleDateString("fr-FR", {
+							weekday: "short",
+							day: "2-digit",
+							month: "short",
+						});
+					}),
+					datasets: [
+						{
+							label: "Friandises",
+							data: Array.from({ length: 7 }, (_, i) => {
+								const day = new Date(startOfWeek);
+								day.setDate(startOfWeek.getDate() + i);
+								return snacksLogs
+									.filter(
+										(log) =>
+											new Date(
+												log.date
+											).toDateString() ===
+											day.toDateString()
+									)
+									.reduce(
+										(acc, log) => acc + log["quantité"],
+										0
+									);
+							}),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(7).fill(limiteFriandise), // Exemple de limite hebdomadaire
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			case "monthly":
+				const daysInMonth = new Date(
+					currentMonth.getFullYear(),
+					currentMonth.getMonth() + 1,
+					0
+				).getDate();
+				return {
+					labels: Array.from(
+						{ length: daysInMonth },
+						(_, i) => `${i + 1}`
+					),
+					datasets: [
+						{
+							label: "Friandises",
+							data: Array.from(
+								{ length: daysInMonth },
+								(_, i) => {
+									const day = i + 1;
+									return snacksLogs
+										.filter(
+											(log) =>
+												new Date(log.date).getDate() ===
+													day &&
+												new Date(
+													log.date
+												).getMonth() ===
+													currentMonth.getMonth() &&
+												new Date(
+													log.date
+												).getFullYear() ===
+													currentMonth.getFullYear()
+										)
+										.reduce(
+											(acc, log) => acc + log["quantité"],
+											0
+										);
+								}
+							),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(daysInMonth).fill(limiteFriandise), // Exemple de limite mensuelle
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			case "yearly":
+				return {
+					labels: Array.from({ length: 12 }, (_, i) =>
+						new Date(0, i).toLocaleString("fr-FR", {
+							month: "short",
+						})
+					),
+					datasets: [
+						{
+							label: "Friandises",
+							data: Array.from({ length: 12 }, (_, i) => {
+								return snacksLogs
+									.filter(
+										(log) =>
+											new Date(log.date).getMonth() ===
+												i &&
+											new Date(log.date).getFullYear() ===
+												currentYear.getFullYear()
+									)
+									.reduce(
+										(acc, log) => acc + log["quantité"],
+										0
+									);
+							}),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(12).fill(limiteFriandise * 30), // Exemple de limite annuelle
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			default:
+				return {
+					labels: [],
+					datasets: [],
+				};
+		}
 	};
-
-	const handlePreviousYear = () => {
-		setCurrentYear(
-			new Date(currentYear.setFullYear(currentYear.getFullYear() - 1))
-		);
-	};
-
-	const handleNextYear = () => {
-		setCurrentYear(
-			new Date(currentYear.setFullYear(currentYear.getFullYear() + 1))
-		);
+	const handleToday = () => {
+		setCurrentDay(new Date());
 	};
 
 	return (
-		<div className="flex justify-around sm:flex-row flex-col">
-			{/* Food */}
-			<div className="max-h-96 w-auto">
-				<div>
-					<Button
-						onClick={() => setSnacksChartType("daily")}
-						variant={
-							snacksChartType === "daily" ? "contained" : "text"
-						}>
-						Journalier
-					</Button>
-					<Button
-						onClick={() => setSnacksChartType("weekly")}
-						variant={
-							snacksChartType === "weekly" ? "contained" : "text"
-						}>
-						Hebdomadaire
-					</Button>
-					<Button
-						onClick={() => setSnacksChartType("monthly")}
-						variant={
-							snacksChartType === "monthly" ? "contained" : "text"
-						}>
-						Mensuel
-					</Button>
-					<Button
-						onClick={() => setSnacksChartType("yearly")}
-						variant={
-							snacksChartType === "yearly" ? "contained" : "text"
-						}>
-						Annuel
-					</Button>
-				</div>
-				{snacksLogs.length > 0 ? (
-					<Line
-						data={getFoodChartData()}
-						options={chartOptions("Consommation Nourriture")}
-					/>
-				) : (
-					<p>Chargement des données...</p>
-				)}
-				{snacksChartType === "daily" && (
-					<div>
-						<Button onClick={handlePreviousDay}>
-							Jour Précédent
-						</Button>
-						<span>{currentDay.toDateString()}</span>
-						<Button onClick={handleNextDay}>Jour Suivant</Button>
-					</div>
-				)}
-				{snacksChartType === "weekly" && (
-					<div>
-						<Button onClick={handlePreviousWeek}>
-							Semaine Précédente
-						</Button>
-						<span>
-							Semaine{" "}
-							{getWeekRange(
-								getWeek(currentWeek.toISOString()),
-								currentWeek.getFullYear()
-							)}
-						</span>
-						<Button onClick={handleNextWeek}>
-							Semaine Suivante
-						</Button>
-					</div>
-				)}
-				{snacksChartType === "monthly" && (
-					<div>
-						<Button onClick={handlePreviousMonth}>
-							Mois Précédent
-						</Button>
-						<span>
-							{currentMonth.toLocaleString("default", {
-								month: "long",
-							})}{" "}
-							{currentMonth.getFullYear()}
-						</span>
-						<Button onClick={handleNextMonth}>Mois Suivant</Button>
-					</div>
-				)}
-				{snacksChartType === "yearly" && (
-					<div>
-						<Button onClick={handlePreviousYear}>
-							Année Précédente
-						</Button>
-						<span>{currentYear.getFullYear()}</span>
-						<Button onClick={handleNextYear}>Année Suivante</Button>
-					</div>
-				)}
-			</div>
+		<div>
+			{/* Snacks */}
+			<ChartComponent
+				chartType={snacksChartType}
+				setChartType={setSnacksChartType}
+				data={getSnacksChartData()}
+				options={chartOptions("Consommation Friandises")}
+				logsLength={snacksLogs.length}
+				currentPeriod={getCurrentPeriod(snacksChartType)}
+				handlePrevious={handlePreviousPeriod(snacksChartType)}
+				handleNext={handleNextPeriod(snacksChartType)}
+				periodLabel={getPeriodLabel(snacksChartType)}
+				handleToday={handleToday} // Ajoutez cette ligne
+			/>
 		</div>
 	);
 };

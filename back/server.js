@@ -10,6 +10,7 @@ import { distributionMqttHandler } from "./mqtt/distributionMqttHandler.js";
 import { friandiseMqttHandler } from "./mqtt/friandiseMqttHandler.js";
 import { niveauMqttHandler } from "./mqtt/niveauMqttHandler.js";
 import historiqueRoutes from "./routes/historique/index.js"; // Ajout de la route
+import limiteRoutes from "./routes/limite/index.js"; // Ajout de la route
 import recordRoutes from "./routes/record.js"; // Ajout de la route
 
 dotenv.config(); // Charger les variables d'environnement
@@ -41,6 +42,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use("/api/records", recordRoutes);
 app.use("/api/historique", historiqueRoutes);
+app.use("/api/limite", limiteRoutes);
 
 app.use((err, req, res, next) => {
 	console.error("Erreur serveur :", err.stack);
@@ -234,5 +236,4 @@ app.get("/api/niveau", (req, res) => {
 server.listen(PORT, async () => {
 	await connectDB(); // Connexion à MongoDB
 	console.log(`Server listening on port ${PORT}`);
-  });
-  
+});

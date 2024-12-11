@@ -27,7 +27,7 @@ router.get("/", async (req, res) => {
 								date: "$historiqueNiveaux.horodatage",
 							},
 						},
-						"quantité(g)": "$historiqueNiveaux.croquettes", // Quantité d'eau
+						quantité: "$historiqueNiveaux.croquettes", // Quantité d'eau
 					},
 				},
 			])
