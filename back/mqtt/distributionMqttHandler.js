@@ -16,7 +16,6 @@ export const distributionMqttHandler = async (topic, message) => {
     // Parse le message reçu
     const payload = JSON.parse(message.toString());
     const { quantite, type, declencheur } = payload;
-    console.log("Distribution :", payload);
     const distributeurId = topic.split("/")[2];
     if (!distributeurId) {
       console.error("Identifiant de distributeur introuvable dans le topic.");

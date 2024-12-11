@@ -1,0 +1,74 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+jobs:
+  lint-and-test:
+    name: Lint, Test & Dependency Check
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:5.0
+        ports:
+          - 27017:27017
+        options: --quiet
+
+    steps:
+      # 1. Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # 3. Install Backend Dependencies
+      - name: Install Backend Dependencies
+        run: |
+          cd back
+          npm install
+
+      # 4. Install Frontend Dependencies
+      - name: Install Frontend Dependencies
+        run: |
+          cd front
+          npm install
+
+      # 5. Lint Backend
+      - name: Install ESLint
+        run: |
+          cd back
+          npm install eslint --save-dev
+      - name: Lint Backend Code
+        run: |
+          cd back
+          npx eslint .
+
+      # 6. Lint Frontend
+      - name: Lint Frontend Code
+        run: |
+          cd front
+          npx eslint .
+
+      # 7. Run Backend Tests
+      - name: Run Backend Tests
+        run: |
+          cd back
+          npm test
+
+      # 8. Run Frontend Tests
+      - name: Run Frontend Tests
+        run: |
+          cd front
+          npm test
+

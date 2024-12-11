@@ -1,22 +1,27 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
 import dotenv from "dotenv";
+import { MongoClient } from "mongodb";
 dotenv.config();
-
 import mongoose from "mongoose";
-
-const connectDB = async (DATABASE_URL, db) => {
-  try {
-    await mongoose.connect(DATABASE_URL, {
-      dbName: db, // Remplacez par le nom de votre base de données
-    });
-    console.log("Connected to Database");
-  } catch (err) {
-    console.log("Please connect Database" + err);
-  }
-};
 
 const uri = process.env.ATLAS_URI || "";
 
-let db;
+let db; // Variable pour stocker la base de données
 
-export { db, connectDB };
+const connectDB = async () => {
+  try {
+    const client = new MongoClient(uri, {
+    });
+    await client.connect();
+    db = client.db("DB");
+    console.log("Connected to Database");
+    await mongoose.connect(uri, {
+      dbName: "DB",
+    });
+  } catch (err) {
+    console.error("Please connect Database: " + err);
+  }
+};
+
+export { connectDB, db };
+
+

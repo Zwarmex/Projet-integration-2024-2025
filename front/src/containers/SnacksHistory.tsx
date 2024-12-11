@@ -1,3 +1,4 @@
+import { Button } from "@mui/material";
 import {
 	CategoryScale,
 	Chart as ChartJS,
@@ -9,8 +10,9 @@ import {
 	Tooltip,
 } from "chart.js";
 import React, { useEffect, useState } from "react";
+import { Line } from "react-chartjs-2";
 import { useUrl } from "../Context/UrlContext";
-import ChartComponent from "../Components/chartComponent";
+
 ChartJS.register(
 	CategoryScale,
 	LinearScale,
@@ -21,36 +23,35 @@ ChartJS.register(
 	Legend
 );
 
-const WaterAndFoodHistory: React.FC = () => {
-	const [feedingLogs, setFeedingLogs] = useState<any[]>([]);
-	const [foodChartType, setFoodChartType] = useState<string>("daily");
+const SnacksHistory: React.FC = () => {
+	const url = useUrl().url;
+	const [snacksChartType, setSnacksChartType] = useState<string>("daily");
 	const [currentDay, setCurrentDay] = useState(new Date());
 	const [currentWeek, setCurrentWeek] = useState(new Date());
 	const [currentMonth, setCurrentMonth] = useState(new Date());
 	const [currentYear, setCurrentYear] = useState(new Date());
-	const url = useUrl().url;
+	const [snacksLogs, setSnacksLogs] = useState<any[]>([]);
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const foodData = await fetchFoodData();
-				if (foodData.length === 0) {
+				const snacksData = await fetchSnacksData();
+				if (snacksData.length === 0) {
 					throw Error("No food data found");
 				}
-				setFeedingLogs(foodData);
+				setSnacksLogs(snacksData);
 			} catch (error) {
 				console.log("Error fetching data:", error);
 			}
 		};
-		console.log(url);
 		fetchData();
 	}, []);
 
-	const fetchFoodData = async () => {
+	const fetchSnacksData = async () => {
 		try {
-			const rawFood = await fetch(`${url}api/historique/nourriture`);
-			const food = await rawFood.json();
-			return food;
+			const rawSnacks = await fetch(`${url}api/historique/friandises`);
+			const snacks = await rawSnacks.json();
+			return snacks;
 		} catch (error) {
 			console.log("Error fetching food data:", error);
 			return [];
@@ -90,29 +91,29 @@ const WaterAndFoodHistory: React.FC = () => {
 	};
 
 	const getFoodChartData = () => {
-		switch (foodChartType) {
+		switch (snacksChartType) {
 			case "daily":
 				return {
-					labels: feedingLogs.map((log) =>
+					labels: snacksLogs.map((log) =>
 						formatDate(log.date, log.heure)
 					),
 					datasets: [
 						{
 							label: "Nourriture (g)",
-							data: feedingLogs.map((log) => log["quantité(g)"]),
+							data: snacksLogs.map((log) => log["quantité(g)"]),
 							borderColor: "rgba(255, 99, 132, 1)",
 							backgroundColor: "rgba(255, 99, 132, 0.2)",
 						},
 						{
-							label: "Normal (200g)",
-							data: new Array(feedingLogs.length).fill(200),
+							label: "Normal (5)",
+							data: new Array(snacksLogs.length).fill(5),
 							borderColor: "rgba(75, 192, 192, 1)",
 							backgroundColor: "rgba(75, 192, 192, 0.2)",
 						},
 					],
 				};
 			case "weekly":
-				const weeklyData = feedingLogs.reduce((acc, log) => {
+				const weeklyData = snacksLogs.reduce((acc, log) => {
 					const week = getWeek(log.date);
 					if (!acc[week]) {
 						acc[week] = 0;
@@ -143,7 +144,7 @@ const WaterAndFoodHistory: React.FC = () => {
 					],
 				};
 			case "monthly":
-				const monthlyData = feedingLogs.reduce((acc, log) => {
+				const monthlyData = snacksLogs.reduce((acc, log) => {
 					const month = new Date(log.date).getMonth();
 					if (!acc[month]) {
 						acc[month] = 0;
@@ -176,7 +177,7 @@ const WaterAndFoodHistory: React.FC = () => {
 					],
 				};
 			case "yearly":
-				const yearlyData = feedingLogs.reduce((acc, log) => {
+				const yearlyData = snacksLogs.reduce((acc, log) => {
 					const year = new Date(log.date).getFullYear();
 					if (!acc[year]) {
 						acc[year] = 0;
@@ -223,27 +224,20 @@ const WaterAndFoodHistory: React.FC = () => {
 				text: title,
 			},
 		},
+		scales: {
+			y: {
+				ticks: {
+					// Retirer les nombres à virgules
+					callback: function (tickValue: string | number) {
+						return Number.isInteger(tickValue) ? tickValue : null;
+					},
+				},
+				// Changer l'échelle du graph
+				suggestedMin: 0, // Valeur minimale
+				suggestedMax: 10, // Valeur maximale (ajustez selon vos besoins)
+			},
+		},
 	});
-
-	const getCurrentPeriod = (chartType: string) => {
-		switch (chartType) {
-			case "daily":
-				return currentDay.toDateString();
-			case "weekly":
-				return `Semaine ${getWeekRange(
-					getWeek(currentWeek.toISOString()),
-					currentWeek.getFullYear()
-				)}`;
-			case "monthly":
-				return `${currentMonth.toLocaleString("default", {
-					month: "long",
-				})} ${currentMonth.getFullYear()}`;
-			case "yearly":
-				return currentYear.getFullYear().toString();
-			default:
-				return "";
-		}
-	};
 
 	const handlePreviousDay = () => {
 		setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)));
@@ -259,21 +253,15 @@ const WaterAndFoodHistory: React.FC = () => {
 		);
 	};
 
-	const handlePreviousMonth = () => {
-		setCurrentMonth(
-			new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))
-		);
-	};
-
 	const handleNextWeek = () => {
 		setCurrentWeek(
 			new Date(currentWeek.setDate(currentWeek.getDate() + 7))
 		);
 	};
 
-	const handlePreviousYear = () => {
-		setCurrentYear(
-			new Date(currentYear.setFullYear(currentYear.getFullYear() - 1))
+	const handlePreviousMonth = () => {
+		setCurrentMonth(
+			new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))
 		);
 	};
 
@@ -283,73 +271,112 @@ const WaterAndFoodHistory: React.FC = () => {
 		);
 	};
 
+	const handlePreviousYear = () => {
+		setCurrentYear(
+			new Date(currentYear.setFullYear(currentYear.getFullYear() - 1))
+		);
+	};
+
 	const handleNextYear = () => {
 		setCurrentYear(
 			new Date(currentYear.setFullYear(currentYear.getFullYear() + 1))
 		);
 	};
 
-	const handlePreviousPeriod = (chartType: string) => {
-		switch (chartType) {
-			case "daily":
-				return handlePreviousDay;
-			case "weekly":
-				return handlePreviousWeek;
-			case "monthly":
-				return handlePreviousMonth;
-			case "yearly":
-				return handlePreviousYear;
-			default:
-				return () => {};
-		}
-	};
-
-	const handleNextPeriod = (chartType: string) => {
-		switch (chartType) {
-			case "daily":
-				return handleNextDay;
-			case "weekly":
-				return handleNextWeek;
-			case "monthly":
-				return handleNextMonth;
-			case "yearly":
-				return handleNextYear;
-			default:
-				return () => {};
-		}
-	};
-
-	const getPeriodLabel = (chartType: string) => {
-		switch (chartType) {
-			case "daily":
-				return "Jour";
-			case "weekly":
-				return "Semaine";
-			case "monthly":
-				return "Mois";
-			case "yearly":
-				return "Année";
-			default:
-				return "";
-		}
-	};
-
 	return (
 		<div className="flex justify-around sm:flex-row flex-col">
 			{/* Food */}
-			<ChartComponent
-				chartType={foodChartType}
-				setChartType={setFoodChartType}
-				data={getFoodChartData()}
-				options={chartOptions("Consommation Nourriture")}
-				logsLength={feedingLogs.length}
-				currentPeriod={getCurrentPeriod(foodChartType)}
-				handlePrevious={handlePreviousPeriod(foodChartType)}
-				handleNext={handleNextPeriod(foodChartType)}
-				periodLabel={getPeriodLabel(foodChartType)}
-			/>
+			<div className="max-h-96 w-auto">
+				<div>
+					<Button
+						onClick={() => setSnacksChartType("daily")}
+						variant={
+							snacksChartType === "daily" ? "contained" : "text"
+						}>
+						Journalier
+					</Button>
+					<Button
+						onClick={() => setSnacksChartType("weekly")}
+						variant={
+							snacksChartType === "weekly" ? "contained" : "text"
+						}>
+						Hebdomadaire
+					</Button>
+					<Button
+						onClick={() => setSnacksChartType("monthly")}
+						variant={
+							snacksChartType === "monthly" ? "contained" : "text"
+						}>
+						Mensuel
+					</Button>
+					<Button
+						onClick={() => setSnacksChartType("yearly")}
+						variant={
+							snacksChartType === "yearly" ? "contained" : "text"
+						}>
+						Annuel
+					</Button>
+				</div>
+				{snacksLogs.length > 0 ? (
+					<Line
+						data={getFoodChartData()}
+						options={chartOptions("Consommation Nourriture")}
+					/>
+				) : (
+					<p>Chargement des données...</p>
+				)}
+				{snacksChartType === "daily" && (
+					<div>
+						<Button onClick={handlePreviousDay}>
+							Jour Précédent
+						</Button>
+						<span>{currentDay.toDateString()}</span>
+						<Button onClick={handleNextDay}>Jour Suivant</Button>
+					</div>
+				)}
+				{snacksChartType === "weekly" && (
+					<div>
+						<Button onClick={handlePreviousWeek}>
+							Semaine Précédente
+						</Button>
+						<span>
+							Semaine{" "}
+							{getWeekRange(
+								getWeek(currentWeek.toISOString()),
+								currentWeek.getFullYear()
+							)}
+						</span>
+						<Button onClick={handleNextWeek}>
+							Semaine Suivante
+						</Button>
+					</div>
+				)}
+				{snacksChartType === "monthly" && (
+					<div>
+						<Button onClick={handlePreviousMonth}>
+							Mois Précédent
+						</Button>
+						<span>
+							{currentMonth.toLocaleString("default", {
+								month: "long",
+							})}{" "}
+							{currentMonth.getFullYear()}
+						</span>
+						<Button onClick={handleNextMonth}>Mois Suivant</Button>
+					</div>
+				)}
+				{snacksChartType === "yearly" && (
+					<div>
+						<Button onClick={handlePreviousYear}>
+							Année Précédente
+						</Button>
+						<span>{currentYear.getFullYear()}</span>
+						<Button onClick={handleNextYear}>Année Suivante</Button>
+					</div>
+				)}
+			</div>
 		</div>
 	);
 };
 
-export default WaterAndFoodHistory;
+export default SnacksHistory;
