@@ -17,7 +17,6 @@ export const friandiseMqttHandler = async (topic, message) => {
     // Parse le message reçu
     const payload = JSON.parse(message.toString());
     const { event, compteur, limite } = payload;
-    console.log("Evènement :", payload);
     // Vérifie si l'événement est valide
     if (
       event === "limite_friandise_atteinte" ||
