@@ -3,6 +3,7 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import BackArrow from "../Assets/Images/backArrow.svg";
 import HistoriqueIcon from "../Assets/Images/historique.svg";
+import FriandiseIcon from "../Assets/Images/friandises.svg";
 import Logo from "../Assets/Images/Logo.svg";
 
 const Header: React.FC = () => {
@@ -47,6 +48,31 @@ const Header: React.FC = () => {
 						onClick={() => navigate("/historique")}>
 						<img
 							src={HistoriqueIcon}
+							alt="Icône représentant l'historique"
+							className="w-6 h-6"
+						/>
+					</Button>
+				)}
+			</Box>
+			<Box className="relative left-12 bottom-9">
+				{/* Afficher la flèche retour si on est sur /historique */}
+				{location.pathname === "/recompenses" ? (
+					<Button
+						className="cursor-pointer"
+						onClick={() => navigate(-1)} // Retour à la page précédente
+					>
+						<img
+							src={BackArrow}
+							alt="Icône de retour"
+							className="w-6 h-6"
+						/>
+					</Button>
+				) : (
+					<Button
+						className="cursor-pointer"
+						onClick={() => navigate("/recompenses")}>
+						<img
+							src={FriandiseIcon}
 							alt="Icône représentant l'historique"
 							className="w-6 h-6"
 						/>
