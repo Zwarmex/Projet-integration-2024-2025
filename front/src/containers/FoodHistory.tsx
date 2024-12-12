@@ -85,7 +85,7 @@ const FoodHistory: React.FC = () => {
 					},
 				},
 				min: 0,
-				max: foodChartType === "yearly" ? 7000 : 500,
+				max: foodChartType === "yearly" ? 7000 : 1000,
 				stepSize: foodChartType === "yearly" ? 200 : 100,
 			},
 		},
