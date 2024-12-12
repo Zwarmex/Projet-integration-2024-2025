@@ -73,7 +73,7 @@ const Header: React.FC = () => {
 						onClick={() => navigate("/recompenses")}>
 						<img
 							src={FriandiseIcon}
-							alt="Icône représentant l'historique"
+							alt="Icône représentant l'istorique des friandises"
 							className="w-6 h-6"
 						/>
 					</Button>
