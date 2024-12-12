@@ -1,0 +1,25 @@
+.sep{
+    border: 3px black solid !important;
+}
+
+table{
+    text-align: center;
+    border-collapse: collapse;
+    border: 3px solid black !important;
+    font-size: 110%;
+}
+
+tr{
+    border: 1px solid black !important;
+}
+
+th{
+    border-bottom: 3px solid black !important;
+    padding: 5px;
+}
+
+td{
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+}

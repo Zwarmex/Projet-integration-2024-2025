@@ -5,7 +5,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { io } from "socket.io-client";
 import { useUrl } from "./Context/UrlContext";
-import { HistoriquePage, HomePage, LoginPage, SettingsPage } from "./pages";
+import { HistoriquePage, HomePage, LoginPage, SettingsPage, RecompensesPage } from "./pages";
 
 const App = () => {
 	const { url } = useUrl(); // Déplacez l'appel du hook ici
@@ -66,6 +66,7 @@ const App = () => {
 		},
 		{ path: "/login", element: <LoginPage isSigningUp={false} /> },
 		{ path: "/historique", element: <HistoriquePage /> },
+		{ path: "/recompenses", element: <RecompensesPage /> },
 		{ path: "/settings", element: <SettingsPage /> },
 	]);
 	return (

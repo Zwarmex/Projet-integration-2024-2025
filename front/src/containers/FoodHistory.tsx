@@ -1,48 +1,44 @@
-import {
-	CategoryScale,
-	Chart as ChartJS,
-	Legend,
-	LinearScale,
-	LineElement,
-	PointElement,
-	Title,
-	Tooltip,
-} from "chart.js";
 import React, { useEffect, useState } from "react";
 import { useUrl } from "../Context/UrlContext";
-import ChartComponent from "../Components/chartComponent";
-ChartJS.register(
-	CategoryScale,
-	LinearScale,
-	PointElement,
-	LineElement,
-	Title,
-	Tooltip,
-	Legend
-);
 
-const WaterAndFoodHistory: React.FC = () => {
-	const [feedingLogs, setFeedingLogs] = useState<any[]>([]);
+import ChartComponent, {
+	getWeek,
+	getWeekRange,
+	handleNextDay,
+	handleNextMonth,
+	handleNextWeek,
+	handleNextYear,
+	handlePreviousDay,
+	handlePreviousMonth,
+	handlePreviousWeek,
+	handlePreviousYear,
+} from "../components/ChartComponent";
+
+const FoodHistory: React.FC = () => {
+	const [foodLogs, setFoodLogs] = useState<any[]>([]);
 	const [foodChartType, setFoodChartType] = useState<string>("daily");
 	const [currentDay, setCurrentDay] = useState(new Date());
 	const [currentWeek, setCurrentWeek] = useState(new Date());
 	const [currentMonth, setCurrentMonth] = useState(new Date());
 	const [currentYear, setCurrentYear] = useState(new Date());
+	const [foodLimit, setFoodLimit] = useState<number>(0);
 	const url = useUrl().url;
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				const foodData = await fetchFoodData();
+				const foodLimitData = await fetchFoodLimit();
+
 				if (foodData.length === 0) {
 					throw Error("No food data found");
 				}
-				setFeedingLogs(foodData);
+				setFoodLogs(foodData);
+				setFoodLimit(foodLimitData);
 			} catch (error) {
 				console.log("Error fetching data:", error);
 			}
 		};
-		console.log(url);
 		fetchData();
 	}, []);
 
@@ -50,6 +46,7 @@ const WaterAndFoodHistory: React.FC = () => {
 		try {
 			const rawFood = await fetch(`${url}api/historique/nourriture`);
 			const food = await rawFood.json();
+			console.log("food : ", food);
 			return food;
 		} catch (error) {
 			console.log("Error fetching food data:", error);
@@ -57,158 +54,14 @@ const WaterAndFoodHistory: React.FC = () => {
 		}
 	};
 
-	const getWeek = (dateString: string) => {
-		const date = new Date(dateString);
-		const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-		const pastDaysOfYear =
-			(date.getTime() - firstDayOfYear.getTime()) / 86400000;
-		return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-	};
-
-	const getWeekRange = (week: number, year: number) => {
-		const firstDayOfYear = new Date(year, 0, 1);
-		const days = (week - 1) * 7;
-		const startDate = new Date(
-			firstDayOfYear.setDate(firstDayOfYear.getDate() + days)
-		);
-		const endDate = new Date(startDate);
-		endDate.setDate(startDate.getDate() + 6);
-		const format = (date: Date) =>
-			`${date.getDate().toString().padStart(2, "0")}-${(
-				date.getMonth() + 1
-			)
-				.toString()
-				.padStart(2, "0")}`;
-		return `${format(startDate)} au ${format(endDate)}`;
-	};
-
-	const formatDate = (dateString: string, timeString: string) => {
-		const date = new Date(dateString);
-		const day = date.getDate().toString().padStart(2, "0");
-		const month = (date.getMonth() + 1).toString().padStart(2, "0");
-		return `${day}-${month}, ${timeString}`;
-	};
-
-	const getFoodChartData = () => {
-		switch (foodChartType) {
-			case "daily":
-				return {
-					labels: feedingLogs.map((log) =>
-						formatDate(log.date, log.heure)
-					),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: feedingLogs.map((log) => log["quantité(g)"]),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (200g)",
-							data: new Array(feedingLogs.length).fill(200),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			case "weekly":
-				const weeklyData = feedingLogs.reduce((acc, log) => {
-					const week = getWeek(log.date);
-					if (!acc[week]) {
-						acc[week] = 0;
-					}
-					acc[week] += log["quantité(g)"];
-					return acc;
-				}, {});
-
-				return {
-					labels: Object.keys(weeklyData).map((week) =>
-						getWeekRange(parseInt(week), new Date().getFullYear())
-					),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: Object.values(weeklyData),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (1400g)",
-							data: new Array(
-								Object.keys(weeklyData).length
-							).fill(1400),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			case "monthly":
-				const monthlyData = feedingLogs.reduce((acc, log) => {
-					const month = new Date(log.date).getMonth();
-					if (!acc[month]) {
-						acc[month] = 0;
-					}
-					acc[month] += log["quantité(g)"];
-					return acc;
-				}, {});
-
-				return {
-					labels: Object.keys(monthlyData).map((month) =>
-						new Date(0, parseInt(month)).toLocaleString("default", {
-							month: "long",
-						})
-					),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: Object.values(monthlyData),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (5600g)",
-							data: new Array(
-								Object.keys(monthlyData).length
-							).fill(5600),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			case "yearly":
-				const yearlyData = feedingLogs.reduce((acc, log) => {
-					const year = new Date(log.date).getFullYear();
-					if (!acc[year]) {
-						acc[year] = 0;
-					}
-					acc[year] += log["quantité(g)"];
-					return acc;
-				}, {});
-
-				return {
-					labels: Object.keys(yearlyData),
-					datasets: [
-						{
-							label: "Nourriture (g)",
-							data: Object.values(yearlyData),
-							borderColor: "rgba(255, 99, 132, 1)",
-							backgroundColor: "rgba(255, 99, 132, 0.2)",
-						},
-						{
-							label: "Normal (67200g)",
-							data: new Array(
-								Object.keys(yearlyData).length
-							).fill(67200),
-							borderColor: "rgba(75, 192, 192, 1)",
-							backgroundColor: "rgba(75, 192, 192, 0.2)",
-						},
-					],
-				};
-			default:
-				return {
-					labels: [],
-					datasets: [],
-				};
+	const fetchFoodLimit = async () => {
+		try {
+			const rawFoodLimit = await fetch(`${url}api/limite/nourriture`);
+			const foodLimitData = await rawFoodLimit.json();
+			return foodLimitData;
+		} catch (error) {
+			console.log("Error fetching food limit:", error);
+			return [];
 		}
 	};
 
@@ -223,12 +76,30 @@ const WaterAndFoodHistory: React.FC = () => {
 				text: title,
 			},
 		},
+		scales: {
+			y: {
+				beginAtZero: true,
+				ticks: {
+					callback: function (value: any) {
+						return Number(value).toFixed(0); // Enlever les valeurs à virgule
+					},
+				},
+				min: 0,
+				max: foodChartType === "yearly" ? 7000 : 1000,
+				stepSize: foodChartType === "yearly" ? 200 : 100,
+			},
+		},
 	});
 
 	const getCurrentPeriod = (chartType: string) => {
 		switch (chartType) {
 			case "daily":
-				return currentDay.toDateString();
+				return currentDay.toLocaleDateString("fr-FR", {
+					weekday: "short",
+					day: "2-digit",
+					month: "short",
+					year: "numeric",
+				});
 			case "weekly":
 				return `Semaine ${getWeekRange(
 					getWeek(currentWeek.toISOString()),
@@ -245,60 +116,16 @@ const WaterAndFoodHistory: React.FC = () => {
 		}
 	};
 
-	const handlePreviousDay = () => {
-		setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() - 1)));
-	};
-
-	const handleNextDay = () => {
-		setCurrentDay(new Date(currentDay.setDate(currentDay.getDate() + 1)));
-	};
-
-	const handlePreviousWeek = () => {
-		setCurrentWeek(
-			new Date(currentWeek.setDate(currentWeek.getDate() - 7))
-		);
-	};
-
-	const handlePreviousMonth = () => {
-		setCurrentMonth(
-			new Date(currentMonth.setMonth(currentMonth.getMonth() - 1))
-		);
-	};
-
-	const handleNextWeek = () => {
-		setCurrentWeek(
-			new Date(currentWeek.setDate(currentWeek.getDate() + 7))
-		);
-	};
-
-	const handlePreviousYear = () => {
-		setCurrentYear(
-			new Date(currentYear.setFullYear(currentYear.getFullYear() - 1))
-		);
-	};
-
-	const handleNextMonth = () => {
-		setCurrentMonth(
-			new Date(currentMonth.setMonth(currentMonth.getMonth() + 1))
-		);
-	};
-
-	const handleNextYear = () => {
-		setCurrentYear(
-			new Date(currentYear.setFullYear(currentYear.getFullYear() + 1))
-		);
-	};
-
 	const handlePreviousPeriod = (chartType: string) => {
 		switch (chartType) {
 			case "daily":
-				return handlePreviousDay;
+				return () => handlePreviousDay(currentDay, setCurrentDay);
 			case "weekly":
-				return handlePreviousWeek;
+				return () => handlePreviousWeek(currentWeek, setCurrentWeek);
 			case "monthly":
-				return handlePreviousMonth;
+				return () => handlePreviousMonth(currentMonth, setCurrentMonth);
 			case "yearly":
-				return handlePreviousYear;
+				return () => handlePreviousYear(currentYear, setCurrentYear);
 			default:
 				return () => {};
 		}
@@ -307,13 +134,13 @@ const WaterAndFoodHistory: React.FC = () => {
 	const handleNextPeriod = (chartType: string) => {
 		switch (chartType) {
 			case "daily":
-				return handleNextDay;
+				return () => handleNextDay(currentDay, setCurrentDay);
 			case "weekly":
-				return handleNextWeek;
+				return () => handleNextWeek(currentWeek, setCurrentWeek);
 			case "monthly":
-				return handleNextMonth;
+				return () => handleNextMonth(currentMonth, setCurrentMonth);
 			case "yearly":
-				return handleNextYear;
+				return () => handleNextYear(currentYear, setCurrentYear);
 			default:
 				return () => {};
 		}
@@ -334,22 +161,214 @@ const WaterAndFoodHistory: React.FC = () => {
 		}
 	};
 
+	const getFoodChartData = () => {
+		switch (foodChartType) {
+			case "daily":
+				return {
+					labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+					datasets: [
+						{
+							label: "Nourriture",
+							data: Array.from({ length: 24 }, (_, i) =>
+								foodLogs
+									.filter(
+										(log) =>
+											new Date(
+												log.date
+											).toDateString() ===
+												currentDay.toDateString() &&
+											parseInt(
+												log.heure.split(":")[0],
+												10
+											) === i
+									)
+									.reduce(
+										(acc, log) => acc + log["quantité"],
+										0
+									)
+							),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(24).fill(foodLimit), // Exemple de limite journalière
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			case "weekly":
+				const startOfWeek = new Date(currentWeek);
+				startOfWeek.setDate(
+					startOfWeek.getDate() - startOfWeek.getDay() + 1
+				); // Définir le lundi de la semaine actuelle
+
+				return {
+					labels: Array.from({ length: 7 }, (_, i) => {
+						const day = new Date(startOfWeek);
+						day.setDate(startOfWeek.getDate() + i);
+						return day.toLocaleDateString("fr-FR", {
+							weekday: "short",
+							day: "2-digit",
+							month: "short",
+						});
+					}),
+					datasets: [
+						{
+							label: "Nourriture",
+							data: Array.from({ length: 7 }, (_, i) => {
+								const day = new Date(startOfWeek);
+								day.setDate(startOfWeek.getDate() + i);
+								return foodLogs
+									.filter(
+										(log) =>
+											new Date(
+												log.date
+											).toDateString() ===
+											day.toDateString()
+									)
+									.reduce(
+										(acc, log) => acc + log["quantité"],
+										0
+									);
+							}),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(7).fill(foodLimit), // Exemple de limite hebdomadaire
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			case "monthly":
+				const daysInMonth = new Date(
+					currentMonth.getFullYear(),
+					currentMonth.getMonth() + 1,
+					0
+				).getDate();
+				return {
+					labels: Array.from(
+						{ length: daysInMonth },
+						(_, i) => `${i + 1}`
+					),
+					datasets: [
+						{
+							label: "Nourriture",
+							data: Array.from(
+								{ length: daysInMonth },
+								(_, i) => {
+									const day = i + 1;
+									return foodLogs
+										.filter(
+											(log) =>
+												new Date(log.date).getDate() ===
+													day &&
+												new Date(
+													log.date
+												).getMonth() ===
+													currentMonth.getMonth() &&
+												new Date(
+													log.date
+												).getFullYear() ===
+													currentMonth.getFullYear()
+										)
+										.reduce(
+											(acc, log) => acc + log["quantité"],
+											0
+										);
+								}
+							),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(daysInMonth).fill(foodLimit), // Exemple de limite mensuelle
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			case "yearly":
+				return {
+					labels: Array.from({ length: 12 }, (_, i) =>
+						new Date(0, i).toLocaleString("fr-FR", {
+							month: "short",
+						})
+					),
+					datasets: [
+						{
+							label: "Nourriture",
+							data: Array.from({ length: 12 }, (_, i) => {
+								return foodLogs
+									.filter(
+										(log) =>
+											new Date(log.date).getMonth() ===
+												i &&
+											new Date(log.date).getFullYear() ===
+												currentYear.getFullYear()
+									)
+									.reduce(
+										(acc, log) => acc + log["quantité"],
+										0
+									);
+							}),
+							borderColor: "rgba(255, 99, 132, 1)",
+							backgroundColor: "rgba(255, 99, 132, 0.2)",
+						},
+						{
+							label: "Limite",
+							data: new Array(12).fill(foodLimit * 30), // Exemple de limite annuelle
+							borderColor: "rgba(75, 192, 192, 1)",
+							backgroundColor: "rgba(75, 192, 192, 0.2)",
+							pointRadius: 0,
+							fill: false,
+							borderDash: [10, 5],
+						},
+					],
+				};
+			default:
+				return {
+					labels: [],
+					datasets: [],
+				};
+		}
+	};
+
+	const handleToday = () => {
+		setCurrentDay(new Date());
+	};
+
 	return (
-		<div className="flex justify-around sm:flex-row flex-col">
+		<div>
 			{/* Food */}
 			<ChartComponent
 				chartType={foodChartType}
 				setChartType={setFoodChartType}
 				data={getFoodChartData()}
 				options={chartOptions("Consommation Nourriture")}
-				logsLength={feedingLogs.length}
+				logsLength={foodLogs.length}
 				currentPeriod={getCurrentPeriod(foodChartType)}
 				handlePrevious={handlePreviousPeriod(foodChartType)}
 				handleNext={handleNextPeriod(foodChartType)}
 				periodLabel={getPeriodLabel(foodChartType)}
+				handleToday={handleToday}
 			/>
 		</div>
 	);
 };
 
-export default WaterAndFoodHistory;
+export default FoodHistory;
