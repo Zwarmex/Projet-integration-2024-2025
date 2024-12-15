@@ -50,17 +50,17 @@ const ActionContainer: React.FC = () => {
           color: "white",
         }}
       >
-        Donner Nourriture
+        Distribuer Nourriture
       </Button>
       <Button onClick={distribuerEau} variant="contained">
-        Donner Eau
+      Distribuer Eau
       </Button>
       <Button
         onClick={distribuerFriandises}
         variant="contained"
         style={{ backgroundColor: "red", color: "white" }}
       >
-        Donner Friandise
+        Distribuer Friandise
       </Button>
     </Box>
   );
