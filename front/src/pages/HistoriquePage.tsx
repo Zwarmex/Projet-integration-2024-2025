@@ -11,11 +11,16 @@ const HistoriquePage: React.FC = () => {
 			<Header />
 			<div className="p-5 bg-bg">
 				<div className="w-full flex flex-col items-center">
-					<div className="flex flex-col sm:flex-row">
+					<div className="hidden sm:flex flex-col md:flex-row">
 						<FoodHistory />
 						<WaterHistory />
 					</div>
-					<SnacksHistory />
+					<div className="hidden sm:block">
+						<SnacksHistory />
+					</div>
+					<div className="block sm:hidden">
+						<p>Veuillez retourner votre téléphone</p>
+					</div>
 				</div>
 			</div>
 		</div>
