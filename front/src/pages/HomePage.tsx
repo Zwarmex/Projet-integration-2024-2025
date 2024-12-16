@@ -80,10 +80,10 @@ const HomePage: React.FC = () => {
 	}, []);
 
 	return (
-		<Box className="h-full bg-bg flex flex-col">
+		<Box className="h-screen flex flex-col bg-bg">
 			<Header />
 			<Box>
-				<Box className="pb-12 p-3">
+				<Box className="bg-bg pb-12 p-3">
 					<Button
 						className="cursor-pointer"
 						onClick={() => navigate("/settings")}>
@@ -99,7 +99,7 @@ const HomePage: React.FC = () => {
 					<Level label="Nourriture" progress={niveaux.croquettes} />
 					{/* Pour changer la valeur de la bar il faut mettre le nombre en pourcentage */}
 				</Box>
-				<Box className="flex flex-col w-full p-3 sm:gap-1 gap-4 sm:flex-row">
+				<Box className="flex flex-col w-full p-3 pb-12 sm:gap-1 gap-4 sm:flex-row bg-bg">
 					<ActionContainer />
 					<NotificationsContainer />
 				</Box>
