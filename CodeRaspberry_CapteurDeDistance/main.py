@@ -35,12 +35,12 @@ echo = Pin(16, Pin.IN, Pin.PULL_DOWN)
 moteur = False  # GPIO pour détecter l'activation du moteur
 
 # Variables pour les distances de référence
-distance_max_cm = 50  
-distance_min_cm = 3   
+distance_max_cm = 14.1  
+distance_min_cm = 1   
 
 # Variables pour les poids de référence
-poids_max_g = 500  
-poids_min_g = 0
+poids_max_g = 700 
+poids_min_g = 30
 
 
 # Ajout du compteur global pour les friandises
@@ -63,10 +63,26 @@ IN2 = 3
 IN3 = 4
 IN4 = 5
 
+
+# Définit les pins pour le deuxième moteur pas à pas
+IN1_2 = 18
+IN2_2 = 19
+IN3_2 = 20
+IN4_2 = 21
+
+
 # Initialise le moteur en mode demi-pas
 stepper_motor = stepper.HalfStepMotor.frompins(IN1, IN2, IN3, IN4)
 stepper_motor.stepms = 1
 stepper_motor.reset()
+
+
+
+# Initialise le deuxièmee moteur en mode demi-pas
+stepper_motor_2 = stepper.HalfStepMotor.frompins(IN1_2, IN2_2, IN3_2, IN4_2)
+stepper_motor_2.stepms = 1
+stepper_motor_2.reset()
+
 
 def charger_config():
     try:
@@ -205,7 +221,7 @@ def mesurer_gamelle_eau():
     """Placeholder pour mesurer le poids de l'eau dans la gamelle."""
     print("Mesure de la gamelle d'eau")
     zero2 = -628500
-    conversionEau = -170.0 
+    conversionEau = 170.0
     hx1 = hx711(Pin(14), Pin(15))  # clock broche GP14, data broche GP15
     hx1.set_power(hx711.power.pwr_up)
     hx1.set_gain(hx711.gain.gain_128) # valeurs possibles 128, 64 ou 32.
@@ -276,10 +292,18 @@ def verifier_seuils_et_distribuer():
             notifier_activation(client, "eau",config["quantite_eau"], "automatique")
 
 
-def  moteur_friandise(): 
-    """Moteur pour friandise"""
+def moteur_friandise():
+    """Fait tourner le moteur pour distribuer une friandise (un tour complet)."""
+    # Nombre total de pas pour un tour complet
+    PAS_PAR_TOUR = 4096 # Ajustez cette valeur en fonction de votre moteur et de son mode (ex. : plein pas ou demi-pas)
+    
+    print("Activation du moteur pour distribuer une friandise.")
+    
+    # Effectuer un tour complet dans le sens horaire
+    stepper_motor_2.step(PAS_PAR_TOUR)
+    
+    print("Friandise distribuée. Le moteur a effectué un tour complet.")
 
-    pass
 
 def distribuer_friandise():
     """Distribue une friandise lorsqu'on appuie sur le bouton et envoie une notification."""
@@ -476,7 +500,7 @@ def main():
 
         # Connexion MQTT et publication des données
         global client
-        client = connection_mqtt(mqtt_host, mqtt_user, mqtt_password)
+        client = connection_mqtt	(mqtt_host, mqtt_user, mqtt_password)
         try:
             
             while True:
@@ -506,6 +530,7 @@ def main():
 
 
 main()
+
 
 
 
