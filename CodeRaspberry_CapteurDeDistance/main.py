@@ -84,6 +84,13 @@ stepper_motor_2.stepms = 1
 stepper_motor_2.reset()
 
 
+
+# Configuration de la GPIO 15 comme sortie pour le relais
+relais = Pin(10, Pin.OUT)
+
+# Initialiser la pompe à l'état éteint
+relais.value(1)
+
 def charger_config():
     try:
         with open("config.json") as f:
@@ -263,8 +270,35 @@ def activer_moteur_croquettes(duree):
     pass
 
 def activer_pompe_eau(duree):
-    """Active la pompe pour distribuer de l'eau."""
-    # Utiliser le GPIO dédié pour une durée donnée
+    """
+    Active le relais pour une durée spécifique.
+    
+    Paramètre :
+    - duree : "petite", "moyenne", "grande"
+    
+    Durées :
+    - petite : 2 secondes
+    - moyenne : 5 secondes
+    - grande : 10 secondes
+    """
+    # Définir les durées en secondes
+    durees = {
+        "petite": 3,
+        "moyenne": 6,
+        "grande": 10
+    }
+    
+    if duree not in durees:
+        print("Durée invalide. Utilisez 'petite', 'moyenne' ou 'grande'.")
+        return
+
+    # Activer le relais
+    print(f"Activation de la pompe pour une durée '{duree}' ({durees[duree]} secondes).")
+    relais.value(0)
+    time.sleep(durees[duree])  # Attendre la durée définie
+    relais.value(1)  # Désactiver le relais
+    print("Pompe désactivée.")
+
     if not mesure_en_cours:
         print("Détection de l'activation du moteur")
         publier_donnees(client)
