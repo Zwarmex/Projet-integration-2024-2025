@@ -1,3 +1,5 @@
+import ArrowLeftIcon from "@mui/icons-material/KeyboardDoubleArrowLeft";
+import ArrowRightIcon from "@mui/icons-material/KeyboardDoubleArrowRight";
 import { Button } from "@mui/material";
 import React from "react";
 import { Line } from "react-chartjs-2";
@@ -151,12 +153,13 @@ const ChartComponent: React.FC<ChartComponentProps> = ({
 				<p>Chargement des données...</p>
 			)}
 			<div>
-				<Button
-					onClick={
-						handlePrevious
-					}>{`${periodLabel} Précédent`}</Button>
+				<Button onClick={handlePrevious}>
+					<ArrowLeftIcon />
+				</Button>
 				<span>{currentPeriod}</span>
-				<Button onClick={handleNext}>{`${periodLabel} Suivant`}</Button>
+				<Button onClick={handleNext}>
+					<ArrowRightIcon />
+				</Button>
 				{chartType === "daily" && (
 					<Button onClick={handleToday}>Aujourd'hui</Button>
 				)}

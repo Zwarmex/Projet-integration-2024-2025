@@ -13,23 +13,92 @@ import {
 	TextField,
 	Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Header } from "../containers";
 import { useUrl } from "../Context/UrlContext";
 
 const SettingsPage: React.FC = () => {
 	const { url } = useUrl();
+	const [foodLimit, setFoodLimit] = useState<number>(0);
+	const [limiteFriandise, setLimiteFriandise] = useState<number>(0);
+	const [waterLimit, setWaterLimit] = useState<number>(0);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const foodLimitData = await fetchFoodLimit();
+				const limiteFriandiseData = await fetchSnacksLimite();
+				const waterLimitData = await fetchWaterLimit();
+
+				setFoodLimit(foodLimitData);
+				setLimiteFriandise(limiteFriandiseData);
+				setWaterLimit(waterLimitData);
+				setLoading(false);
+			} catch (error) {
+				console.log("Error fetching data:", error);
+				setLoading(false);
+			}
+		};
+		fetchData();
+	}, []);
+
+	// Met à jour les valeurs dans settings lorsque les limites sont récupérées
+	useEffect(() => {
+		if (!loading) {
+			setSettings((prevSettings) => ({
+				...prevSettings,
+				feedThreshold: foodLimit, // Met à jour le seuil de nourriture
+				waterThreshold: waterLimit, // Met à jour le seuil d'eau
+				dailyTreatLimit: limiteFriandise, // Met à jour la limite de friandises
+			}));
+		}
+	}, [foodLimit, waterLimit, limiteFriandise, loading]);
+
+	const fetchFoodLimit = async () => {
+		try {
+			const rawFoodLimit = await fetch(`${url}api/limite/nourriture`);
+			const foodLimitData = await rawFoodLimit.json();
+			return foodLimitData;
+		} catch (error) {
+			console.log("Error fetching food limit:", error);
+			return [];
+		}
+	};
+	const fetchSnacksLimite = async () => {
+		try {
+			const rawLimiteFriandise = await fetch(
+				`${url}api/limite/friandises`
+			);
+			const limiteFriandiseData = await rawLimiteFriandise.json();
+			return limiteFriandiseData;
+		} catch (error) {
+			console.log("Error fetching snacks limit:", error);
+			return [];
+		}
+	};
+	const fetchWaterLimit = async () => {
+		try {
+			const rawWaterLimit = await fetch(`${url}api/limite/eau`);
+			const waterLimitData = await rawWaterLimit.json();
+			return waterLimitData;
+		} catch (error) {
+			console.log("Error fetching snacks limit:", error);
+			return [];
+		}
+	};
+
 	// Centralisation de l'état
 	const [settings, setSettings] = useState({
 		autoFeedEnabled: true,
 		autoWaterEnabled: true,
-		feedThreshold: 20, // Seuil pour la nourriture (en grammes)
-		waterThreshold: 20, // Seuil pour l'eau (en millilitres)
+		feedThreshold: foodLimit, // Seuil pour la nourriture (en grammes)
+		waterThreshold: waterLimit, // Seuil pour l'eau (en millilitres)
 		feedQuantity: "Petite", // Quantité de distribution de nourriture
 		waterQuantity: "Petite", // Quantité de distribution d'eau
-		dailyTreatLimit: 5, // Limite quotidienne de friandises
+		dailyTreatLimit: limiteFriandise, // Limite quotidienne de friandises
 	});
-
+	console.log(foodLimit);
 	const [openSnackbar, setOpenSnackbar] = useState(false); // État pour gérer le toast
 	const [error, setError] = useState<string | null>(null); // Gestion des erreurs
 
@@ -101,6 +170,10 @@ const SettingsPage: React.FC = () => {
 			console.error("Erreur réseau :", error);
 		}
 	};
+
+	if (loading) {
+		return <p>Chargement des données...</p>;
+	}
 
 	return (
 		<Box
