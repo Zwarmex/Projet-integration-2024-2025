@@ -5,6 +5,8 @@ import {
 	WaterHistory,
 } from "../containers";
 
+import tel from "../Assets/Images/retourner.png";
+
 const HistoriquePage: React.FC = () => {
 	return (
 		<div className="h-screen w-screen">
@@ -18,7 +20,12 @@ const HistoriquePage: React.FC = () => {
 					<div className="hidden sm:block">
 						<SnacksHistory />
 					</div>
-					<div className="block sm:hidden">
+					<div className="sm:hidden flex flex-col items-center">
+						<img
+							src={tel}
+							alt="retourner"
+							className="w-36 h-auto"
+						/>
 						<p>Veuillez retourner votre téléphone</p>
 					</div>
 				</div>
