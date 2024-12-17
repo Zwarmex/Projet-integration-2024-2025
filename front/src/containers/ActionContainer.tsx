@@ -1,70 +1,58 @@
-import { Box, Button } from "@mui/material";
-import React from "react";
+import { Box, Button, Snackbar, Alert } from "@mui/material";
+import React, { useState } from "react";
 import { useUrl } from "../Context/UrlContext";
 
 const ActionContainer: React.FC = () => {
-	const { url } = useUrl();
+  const { url } = useUrl();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-	const distribuerCroquettes = async () => {
-		try {
-			const response = await fetch(`${url}api/distribuer_croquettes`);
-			const data = await response.json();
-			console.log(data.message); // Affiche la réponse dans la console
-		} catch (error) {
-			console.error(
-				"Erreur lors de l'appel à l'API distribuer_croquettes :",
-				error
-			);
-		}
-	};
+  const handleDistribution = async (endpoint: string) => {
+    setError(null);
+    setSuccess(null);
 
-	const distribuerEau = async () => {
-		try {
-			const response = await fetch(`${url}api/distribuer_eau`);
-			const data = await response.json();
-			console.log(data.message); // Affiche la réponse dans la console
-		} catch (error) {
-			console.error(
-				"Erreur lors de l'appel à l'API distribuer_eau :",
-				error
-			);
-		}
-	};
+    try {
+      const response = await fetch(`${url}api/${endpoint}`);
+      if (!response.ok) throw new Error("Erreur lors de l'appel Ã l'API");
+      const data = await response.json();
+      setSuccess(data.message);
+    } catch (err) {
+      setError("Une erreur est survenue");
+    }
+  };
 
-	const distribuerFriandises = async () => {
-		try {
-			const response = await fetch(`${url}api/distribuer_friandises`);
-			const data = await response.json();
-			console.log(data.message); // Affiche la réponse dans la console
-		} catch (error) {
-			console.error(
-				"Erreur lors de l'appel à l'API distribuer_friandises :",
-				error
-			);
-		}
-	};
-	return (
-		<Box className="border-solid border-2 border-black sm:gap-0 gap-3 rounded-lg sm:w-1/2 p-3 flex flex-col justify-around">
-			<Button
-				onClick={distribuerCroquettes}
-				variant="contained"
-				sx={{
-					backgroundColor: "var(--main)", // Utiliser la couleur de Tailwind
-					color: "white",
-				}}>
-				Remplir Nourriture
-			</Button>
-			<Button onClick={distribuerEau} variant="contained">
-				Remplir Eau
-			</Button>
-			<Button
-				onClick={distribuerFriandises}
-				variant="contained"
-				style={{ backgroundColor: "red", color: "white" }}>
-				Donner Friandise
-			</Button>
-		</Box>
-	);
+  return (
+    <Box className="border-solid border-2 border-black rounded-lg sm:w-1/2 p-3 flex flex-col gap-3">
+      <Button
+        onClick={() => handleDistribution("distribuer_croquettes")}
+        variant="contained"
+      >
+        Remplir Nourriture
+      </Button>
+      <Button
+        onClick={() => handleDistribution("distribuer_eau")}
+        variant="contained"
+      >
+        Remplir Eau
+      </Button>
+      <Button
+        onClick={() => handleDistribution("distribuer_friandises")}
+        variant="contained"
+        style={{ backgroundColor: "red", color: "white" }}
+      >
+        Donner Friandise
+      </Button>
+
+      {/* Notifications */}
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+        <Alert severity="error">{error}</Alert>
+      </Snackbar>
+
+      <Snackbar open={!!success} autoHideDuration={4000} onClose={() => setSuccess(null)}>
+        <Alert severity="success">{success}</Alert>
+      </Snackbar>
+    </Box>
+  );
 };
 
 export default ActionContainer;
