@@ -45,7 +45,7 @@ const RecompensesPage: React.FC = () => {
 									<tr style={{border: "1px solid"}}>
 										<td>{val.heure}</td>
 										<td>{val.compteur}</td>
-										<td>Récompense ✅</td>
+										<td>✅</td>
 									</tr>
 									</>
 								)}
@@ -53,7 +53,7 @@ const RecompensesPage: React.FC = () => {
 									<tr style={{color: "#666666", border: "1px solid"}}>
 										<td>{val.heure}</td>
 										<td>{val.compteur}</td>
-										<td>Limite atteinte ❌</td>
+										<td>❌</td>
 									</tr>
 									</>
 								)
