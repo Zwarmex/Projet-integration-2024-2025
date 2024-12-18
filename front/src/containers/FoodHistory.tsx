@@ -85,7 +85,12 @@ const FoodHistory: React.FC = () => {
 					},
 				},
 				min: 0,
-				max: foodChartType === "yearly" ? 7000 : 1000,
+				max:
+					foodChartType === "yearly"
+						? 7000
+						: foodChartType === "daily"
+						? 300
+						: 600,
 				stepSize: foodChartType === "yearly" ? 200 : 100,
 			},
 		},
@@ -331,7 +336,7 @@ const FoodHistory: React.FC = () => {
 						},
 						{
 							label: "Limite",
-							data: new Array(12).fill(foodLimit * 30), // Exemple de limite annuelle
+							data: new Array(12).fill(foodLimit * 12), // Exemple de limite annuelle
 							borderColor: "rgba(75, 192, 192, 1)",
 							backgroundColor: "rgba(75, 192, 192, 0.2)",
 							pointRadius: 0,

@@ -104,7 +104,7 @@ const SnacksHistory: React.FC = () => {
 					},
 				},
 				min: 0,
-				max: snacksChartType === "yearly" ? 200 : 25,
+				max: snacksChartType === "yearly" ? 100 : 20,
 				stepSize: snacksChartType === "yearly" ? 10 : 1,
 			},
 		},
@@ -350,7 +350,7 @@ const SnacksHistory: React.FC = () => {
 						},
 						{
 							label: "Limite",
-							data: new Array(12).fill(limiteFriandise * 30), // Exemple de limite annuelle
+							data: new Array(12).fill(limiteFriandise * 12), // Exemple de limite annuelle
 							borderColor: "rgba(75, 192, 192, 1)",
 							backgroundColor: "rgba(75, 192, 192, 0.2)",
 							pointRadius: 0,

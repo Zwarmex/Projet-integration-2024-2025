@@ -84,8 +84,18 @@ const WaterHistory: React.FC = () => {
 					},
 				},
 				min: 0,
-				max: waterChartType === "yearly" ? 35000 : 5000,
-				stepSize: waterChartType === "yearly" ? 1000 : 500,
+				max:
+					waterChartType === "yearly"
+						? 35000
+						: waterChartType === "daily"
+						? 300
+						: 2000,
+				stepSize:
+					waterChartType === "yearly"
+						? 1000
+						: waterChartType === "daily"
+						? 50
+						: 100,
 			},
 		},
 	});
@@ -330,7 +340,7 @@ const WaterHistory: React.FC = () => {
 						},
 						{
 							label: "Limite",
-							data: new Array(12).fill(waterLimit * 300), // Exemple de limite annuelle
+							data: new Array(12).fill(waterLimit * 12), // Exemple de limite annuelle
 							borderColor: "rgba(75, 192, 192, 1)",
 							backgroundColor: "rgba(75, 192, 192, 0.2)",
 							pointRadius: 0,
